@@ -1,4 +1,4 @@
-package jfr.logging;
+package jfr.api;
 
 import jfr.test.junit.UidExtension;
 import org.aspectj.lang.JoinPoint;

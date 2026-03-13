@@ -1,8 +1,8 @@
 package jfr.quartz;
 
-import jfr.logging.JfrLoggingService;
-import jfr.logging.JoinPointCallback;
-import jfr.logging.LoggingJoinPoint;
+import jfr.api.JfrLoggingService;
+import jfr.api.JoinPointCallback;
+import jfr.api.LoggingJoinPoint;
 import jfr.test.junit.UidExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;

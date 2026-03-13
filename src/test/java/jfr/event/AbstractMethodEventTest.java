@@ -1,25 +1,37 @@
 package jfr.event;
 
+import jfr.api.LoggingJoinPoint;
+import jfr.test.junit.MethodSourceHelper;
 import jfr.test.junit.UidExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
 
 import static jfr.test.junit.UidExtension.uidS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 /**
  * Тесты для {@link AbstractMethodEvent}.
  *
  * @author Roman_Erzhukov
  */
-@ExtendWith(UidExtension.class)
-public class AbstractMethodEventTest {
+@ExtendWith({MockitoExtension.class, UidExtension.class})
+public class AbstractMethodEventTest implements MethodSourceHelper {
+    static class TestMethodEvent extends AbstractMethodEvent {
+    }
+
+    @Spy
+    TestMethodEvent subj;
+
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void testToString(boolean hasClass) {
-        var subj = spy(AbstractMethodEvent.class);
         subj.beanClass = hasClass ? getClass() : null;
         String method = subj.method = uidS();
 
@@ -28,5 +40,18 @@ public class AbstractMethodEventTest {
         assertThat(actual).isEqualTo(subj.getClass().getSimpleName() +
                 "{beanClass=" + (hasClass ? getClass().getSimpleName() : "null") +
                 ", method=" + method + "}");
+    }
+
+    @ParameterizedTest
+    @MethodSource("booleans2")
+    void isEnabled(boolean enabled, boolean debug) {
+        doReturn(enabled).when(subj).isEnabled();
+        var joinPoint = mock(LoggingJoinPoint.class);
+        var logger = mock(Logger.class);
+        doReturn(debug).when(logger).isDebugEnabled();
+
+        boolean actual = subj.isEnabled(joinPoint, logger);
+
+        assertThat(actual).isEqualTo(enabled || debug);
     }
 }

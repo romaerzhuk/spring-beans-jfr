@@ -1,8 +1,8 @@
 package jfr.quartz;
 
 import com.google.common.base.Throwables;
-import jfr.logging.JfrLoggingService;
-import jfr.logging.LoggingJoinPoint;
+import jfr.api.JfrLoggingService;
+import jfr.api.LoggingJoinPoint;
 import lombok.RequiredArgsConstructor;
 import org.quartz.Job;
 import org.quartz.Scheduler;

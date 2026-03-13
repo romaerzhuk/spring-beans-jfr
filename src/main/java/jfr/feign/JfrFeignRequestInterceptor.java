@@ -6,9 +6,9 @@ import feign.RequestTemplate;
 import feign.Response;
 import feign.ResponseInterceptor;
 import feign.Target;
+import jfr.api.LoggingJoinPoint;
+import jfr.api.NonReentrantLoggingService;
 import jfr.event.FeignRequestEvent;
-import jfr.logging.LoggingJoinPoint;
-import jfr.logging.NonReentrantLoggingService;
 import org.springframework.core.log.LogMessage;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author Roman_Erzhukov
  */
-public class JfrFeignRequestInterceptor implements RequestInterceptor, ResponseInterceptor {
+public final class JfrFeignRequestInterceptor implements RequestInterceptor, ResponseInterceptor {
     private final NonReentrantLoggingService<FeignRequestEvent> loggingService;
 
     public JfrFeignRequestInterceptor(NonReentrantLoggingService<FeignRequestEvent> loggingService) {

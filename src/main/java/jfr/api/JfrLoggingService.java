@@ -1,4 +1,4 @@
-package jfr.logging;
+package jfr.api;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 

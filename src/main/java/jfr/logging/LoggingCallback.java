@@ -3,6 +3,7 @@ package jfr.logging;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
+import jfr.api.LoggingJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import jfr.event.MethodInvocationEvent;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +45,10 @@ final class LoggingCallback {
     @Nullable
     @VisibleForTesting
     LoggingCallback prev;
+    @Nullable
     @VisibleForTesting
     Stopwatch stopwatch;
+    @Nullable
     @VisibleForTesting
     List<Object> args;
 

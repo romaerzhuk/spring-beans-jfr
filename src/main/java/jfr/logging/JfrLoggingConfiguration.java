@@ -1,10 +1,10 @@
-package jfr.config;
+package jfr.logging;
 
 import com.google.common.base.Ticker;
 import jfr.event.NonReentrantMethodEvent;
 import jfr.feign.JfrFeignRequestInterceptor;
-import jfr.logging.JfrLoggingServiceImpl;
 import jfr.quartz.JfrJobFactory;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.LoggerFactory;
@@ -14,6 +14,7 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
@@ -24,10 +25,45 @@ import org.springframework.scheduling.quartz.SchedulerFactoryBean;
  */
 @Slf4j
 @Configuration
-public class JfrConfiguration {
+@ComponentScan(basePackageClasses = JfrLoggingProperties.class)
+@RequiredArgsConstructor
+public class JfrLoggingConfiguration {
+    private final JfrLoggingProperties jfrLoggingProperties;
+
     @Bean
     <E extends NonReentrantMethodEvent> JfrLoggingServiceImpl<E> jfrLoggingService() {
-        return new JfrLoggingServiceImpl<>(Ticker.systemTicker(), LoggerFactory::getLogger);
+        return new JfrLoggingServiceImpl<>(jfrLoggingHelper(), jfrLoggingContextHoler(),
+                jfrReentrantLoggingContextStrategy(), jfrNonReentrantLoggingContextStrategy());
+    }
+
+    @Bean
+    JfrLoggingHelper jfrLoggingHelper() {
+        return new JfrLoggingHelper(jfrLoggingContextHoler());
+    }
+
+    @Bean
+    JfrLoggingContextHolder jfrLoggingContextHoler() {
+        return new JfrLoggingContextHolder(new ThreadLocal<>(), jfrLoggingContextFactory(), jfrLoggingCallbackFactory());
+    }
+
+    @Bean
+    JfrLoggingContextFactory jfrLoggingContextFactory() {
+        return new JfrLoggingContextFactory(jfrLoggingProperties);
+    }
+
+    @Bean
+    LoggingCallbackFactory jfrLoggingCallbackFactory() {
+        return new LoggingCallbackFactory(LoggerFactory::getLogger, jfrLoggingProperties);
+    }
+
+    @Bean
+    JfrReentrantLoggingContextStrategy jfrReentrantLoggingContextStrategy() {
+        return new JfrReentrantLoggingContextStrategy(Ticker.systemTicker());
+    }
+
+    @Bean
+    JfrNonReentrantLoggingContextStrategy jfrNonReentrantLoggingContextStrategy() {
+        return new JfrNonReentrantLoggingContextStrategy();
     }
 
     @Bean
@@ -44,7 +80,7 @@ public class JfrConfiguration {
 
     @Bean
     @ConditionalOnBean(JfrJobFactory.class)
-    public BeanPostProcessor jfrSchedulerFactoryBeanPostProcessor(JfrJobFactory jobFactory) {
+    BeanPostProcessor jfrSchedulerFactoryBeanPostProcessor(JfrJobFactory jobFactory) {
         return new BeanPostProcessor() {
             @Override
             public Object postProcessBeforeInitialization(@NonNull Object bean, @NonNull String beanName) throws BeansException {

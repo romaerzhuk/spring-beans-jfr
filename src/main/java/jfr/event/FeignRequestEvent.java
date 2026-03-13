@@ -5,7 +5,7 @@ import jdk.jfr.Category;
 import jdk.jfr.Label;
 import jdk.jfr.Name;
 import jdk.jfr.StackTrace;
-import jfr.logging.LoggingJoinPoint;
+import jfr.api.LoggingJoinPoint;
 
 import java.util.function.Predicate;
 

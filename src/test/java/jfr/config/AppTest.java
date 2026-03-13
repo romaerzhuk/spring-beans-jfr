@@ -1,6 +1,6 @@
 package jfr.config;
 
-import jfr.logging.JfrLoggingServiceImpl;
+import jfr.api.JfrLoggingService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ public class AppTest {
     @Autowired
     HelloWorldService helloWorldService;
     @MockitoSpyBean
-    JfrLoggingServiceImpl<?> loggingService;
+    JfrLoggingService loggingService;
 
     @Test
     void hello() throws Throwable {

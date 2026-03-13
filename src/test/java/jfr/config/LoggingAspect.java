@@ -1,6 +1,6 @@
 package jfr.config;
 
-import jfr.logging.JfrLoggingService;
+import jfr.api.JfrLoggingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
