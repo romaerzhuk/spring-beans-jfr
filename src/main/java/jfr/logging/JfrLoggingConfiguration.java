@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 
 /**
- * Компоненты для записи статистики выполнения методов Spring Bean-ов в JFR.
+ * Компоненты для записи статистики выполнения методов Spring Bean-ов в лог и Java Flight Recorder (JFR).
  *
  * @author Roman_Erzhukov
  */
@@ -69,13 +69,13 @@ public class JfrLoggingConfiguration {
     @Bean
     @ConditionalOnProperty(value = "jfr.quartz.enabled", havingValue = "true")
     JfrJobFactory jfrJobFactory(ListableBeanFactory beanFactory) {
-        return new JfrJobFactory(beanFactory, jfrLoggingService());
+        return new JfrJobFactory(beanFactory, jfrLoggingContextHoler(), jfrLoggingService());
     }
 
     @Bean
     @ConditionalOnProperty(value = "jfr.feign.enabled", havingValue = "true")
     JfrFeignRequestInterceptor jfrFeignRequestInterceptor() {
-        return new JfrFeignRequestInterceptor(jfrLoggingService());
+        return new JfrFeignRequestInterceptor(jfrLoggingContextHoler(), jfrLoggingService());
     }
 
     @Bean

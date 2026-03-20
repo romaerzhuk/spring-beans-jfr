@@ -1,7 +1,8 @@
 package jfr.logging;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
-import jfr.api.LoggingJoinPoint;
+import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,16 +32,26 @@ class JfrReentrantLoggingContextStrategyTest {
     Ticker ticker;
 
     @Test
-    void createIfReentrant() {
-        var joinPoint = mock(LoggingJoinPoint.class);
-        Function<LoggingJoinPoint, LoggingContext> factory = mock(Function.class);
+    void createContextIfReentrant() {
+        var joinPoint = mock(JfrJoinPoint.class);
+        Function<JfrJoinPoint, LoggingContext> factory = mock(Function.class);
         var expected = mock(LoggingContext.class);
         doReturn(expected).when(factory).apply(joinPoint);
 
-        LoggingContext actual = subj.createIfReentrant(joinPoint, factory);
+        LoggingContext actual = subj.createContextIfReentrant(joinPoint, factory);
 
         assertThat(actual).isEqualTo(expected);
         verifyNoMoreInteractions(ticker, joinPoint, factory, expected);
+    }
+
+    @Test
+    void createUnstartedStopwatchOrNull() {
+        var context = mock(LoggingContext.class);
+
+        Stopwatch actual = subj.createUnstartedStopwatchOrNull(context);
+
+        assertThat(actual.isRunning()).isFalse();
+        verifyNoMoreInteractions(ticker, context);
     }
 
     @Test
@@ -52,7 +63,7 @@ class JfrReentrantLoggingContextStrategyTest {
         LoggingContext actual = subj.init(context, callback, event);
 
         assertThat(actual).isEqualTo(context);
-        verify(context).before(callback, ticker);
+        verify(context).before(callback);
         verifyNoMoreInteractions(ticker, context, callback, event);
     }
 }

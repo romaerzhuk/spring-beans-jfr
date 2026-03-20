@@ -6,9 +6,10 @@ import feign.RequestTemplate;
 import feign.Response;
 import feign.ResponseInterceptor;
 import feign.Target;
-import jfr.api.LoggingJoinPoint;
+import jfr.api.JfrJoinPointFactory;
 import jfr.api.NonReentrantLoggingService;
 import jfr.event.FeignRequestEvent;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.log.LogMessage;
 
 import java.util.List;
@@ -18,12 +19,10 @@ import java.util.List;
  *
  * @author Roman_Erzhukov
  */
+@RequiredArgsConstructor
 public final class JfrFeignRequestInterceptor implements RequestInterceptor, ResponseInterceptor {
+    private final JfrJoinPointFactory joinPointFactory;
     private final NonReentrantLoggingService<FeignRequestEvent> loggingService;
-
-    public JfrFeignRequestInterceptor(NonReentrantLoggingService<FeignRequestEvent> loggingService) {
-        this.loggingService = loggingService;
-    }
 
     @Override
     public void apply(RequestTemplate template) {
@@ -32,7 +31,7 @@ public final class JfrFeignRequestInterceptor implements RequestInterceptor, Res
                 template.method() + ' ' + target.url() + ' ' + template.url());
         var method = LogMessage.of(() -> template.request()
                 .toString());
-        loggingService.before(LoggingJoinPoint.of(target.type(), name, method, List.of()), new FeignRequestEvent());
+        loggingService.before(joinPointFactory.create(target.type(), name, method, List.of()), new FeignRequestEvent());
     }
 
     @Override

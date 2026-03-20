@@ -1,4 +1,4 @@
-package jfr.config;
+package jfr.logging.test;
 
 import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;

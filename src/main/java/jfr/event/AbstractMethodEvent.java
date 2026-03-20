@@ -2,7 +2,7 @@ package jfr.event;
 
 import jdk.jfr.Event;
 import jdk.jfr.Label;
-import jfr.api.LoggingJoinPoint;
+import jfr.api.JfrJoinPoint;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public abstract class AbstractMethodEvent extends Event {
      * @param logger    логгер
      * @return true, если включена запись в JFR или в лог, иначе false
      */
-    public boolean isEnabled(LoggingJoinPoint joinPoint, Logger logger) {
+    public boolean isEnabled(JfrJoinPoint joinPoint, Logger logger) {
         boolean eventEnabled = isEnabled();
         boolean debugEnabled = logger.isDebugEnabled();
         boolean result = eventEnabled || debugEnabled;

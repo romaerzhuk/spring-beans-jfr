@@ -1,4 +1,4 @@
-package jfr.config;
+package jfr.logging.test;
 
 import jfr.api.JfrLoggingService;
 import lombok.RequiredArgsConstructor;

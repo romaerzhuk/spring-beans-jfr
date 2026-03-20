@@ -50,10 +50,10 @@ Java Flight Recorder (JFR) — это механизм легковесного 
 При запуске теста в логе будет примерно следующее:
 
 ```
-DEBUG - [main] jfr.config.HelloWorldService             : HelloWorldService public java.lang.String jfr.config.HelloWorldService.hello(java.lang.String,int) throws java.lang.InterruptedException [мир, 70] statistics: 00:00:00.903
-	class=MultiplyService, method=public java.math.BigDecimal jfr.config.MultiplyService.multiply(java.math.BigDecimal,int) throws java.lang.InterruptedException, count=69, sum=00:00:00.733, min=00:00:00.010, avg=00:00:00.010, max=00:00:00.011
-	class=FactorialService, method=public java.math.BigDecimal jfr.config.FactorialService.factorial(int) throws java.lang.InterruptedException, count=1, sum=00:00:00.133, min=00:00:00.133, avg=00:00:00.133, max=00:00:00.133
-	class=HelloWorldService, method=public java.lang.String jfr.config.HelloWorldService.hello(java.lang.String,int) throws java.lang.InterruptedException, count=1, sum=00:00:00.036, min=00:00:00.036, avg=00:00:00.036, max=00:00:00.036
+DEBUG - [main] jfr.logging.test.HelloWorldService             : HelloWorldService public java.lang.String jfr.logging.test.HelloWorldService.hello(java.lang.String,int) throws java.lang.InterruptedException [мир, 70] statistics: 00:00:00.903
+	class=MultiplyService, method=public java.math.BigDecimal jfr.logging.test.MultiplyService.multiply(java.math.BigDecimal,int) throws java.lang.InterruptedException, count=69, sum=00:00:00.733, min=00:00:00.010, avg=00:00:00.010, max=00:00:00.011
+	class=FactorialService, method=public java.math.BigDecimal jfr.logging.test.FactorialService.factorial(int) throws java.lang.InterruptedException, count=1, sum=00:00:00.133, min=00:00:00.133, avg=00:00:00.133, max=00:00:00.133
+	class=HelloWorldService, method=public java.lang.String jfr.logging.test.HelloWorldService.hello(java.lang.String,int) throws java.lang.InterruptedException, count=1, sum=00:00:00.036, min=00:00:00.036, avg=00:00:00.036, max=00:00:00.036
 ```
 
 Из лога видно самое узкое мето в коде. Метод MultiplyService.multiply:

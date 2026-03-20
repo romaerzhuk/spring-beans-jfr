@@ -1,6 +1,6 @@
 package jfr.event;
 
-import jfr.api.LoggingJoinPoint;
+import jfr.api.JfrJoinPoint;
 import jfr.test.junit.MethodSourceHelper;
 import jfr.test.junit.UidExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +46,7 @@ public class AbstractMethodEventTest implements MethodSourceHelper {
     @MethodSource("booleans2")
     void isEnabled(boolean enabled, boolean debug) {
         doReturn(enabled).when(subj).isEnabled();
-        var joinPoint = mock(LoggingJoinPoint.class);
+        var joinPoint = mock(JfrJoinPoint.class);
         var logger = mock(Logger.class);
         doReturn(debug).when(logger).isDebugEnabled();
 

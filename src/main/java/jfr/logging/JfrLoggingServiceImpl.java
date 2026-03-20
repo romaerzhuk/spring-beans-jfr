@@ -1,8 +1,8 @@
 package jfr.logging;
 
+import jfr.api.JfrJoinPoint;
 import jfr.api.JfrLoggingService;
 import jfr.api.JoinPointCallback;
-import jfr.api.LoggingJoinPoint;
 import jfr.api.NonReentrantLoggingService;
 import jfr.event.MethodInvocationEvent;
 import jfr.event.NonReentrantMethodEvent;
@@ -26,11 +26,12 @@ final class JfrLoggingServiceImpl<E extends NonReentrantMethodEvent> implements 
 
     @Override
     public Object proceed(ProceedingJoinPoint joinPoint) throws Throwable {
-        return proceedCallback(LoggingJoinPoint.of(joinPoint), joinPoint::proceed);
+        return proceedCallback(contextHolder.wrap(joinPoint), joinPoint::proceed);
     }
 
     @Override
-    public Object proceedCallback(LoggingJoinPoint joinPoint, JoinPointCallback callback) throws Throwable {
+    public Object proceedCallback(JfrJoinPoint joinPoint, JoinPointCallback callback) throws Throwable {
+        log.trace("proceedCallback - start {}", joinPoint);
         LoggingContext context = helper.before(joinPoint, reentrantContextStrategy, new MethodInvocationEvent(), log);
         if (context == null) {
             return callback.proceed();
@@ -38,15 +39,17 @@ final class JfrLoggingServiceImpl<E extends NonReentrantMethodEvent> implements 
         try {
             Object result = callback.proceed();
             helper.afterReturning(context, joinPoint, result);
+            log.trace("proceedCallback - end {}: return {}", joinPoint, result);
             return result;
         } catch (Throwable t) {
             helper.afterThrowing(context, joinPoint, t);
+            log.trace("proceedCallback - end {}: throw {}", joinPoint, t.toString());
             throw t;
         }
     }
 
     @Override
-    public void before(LoggingJoinPoint joinPoint, E event) {
+    public void before(JfrJoinPoint joinPoint, E event) {
         log.trace("before {} {}", joinPoint, event);
         helper.before(joinPoint, nonReentrantContextStrategy, event, log);
     }

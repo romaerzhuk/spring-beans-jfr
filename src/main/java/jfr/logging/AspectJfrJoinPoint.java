@@ -1,5 +1,6 @@
-package jfr.api;
+package jfr.logging;
 
+import jfr.api.JfrJoinPoint;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -9,27 +10,29 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Реализация {@link LoggingJoinPoint} для {@link JoinPoint}.
+ * Реализация {@link JfrJoinPoint} для {@link JoinPoint}.
  *
+ * @param index     индекс фрейма стека вызовов
+ * @param joinPoint точка вызова
  * @author Roman_Erzhukov
  */
-record AspectLoggingJoinPoint(JoinPoint identityPoint) implements LoggingJoinPoint {
+record AspectJfrJoinPoint(int index, JoinPoint joinPoint) implements JfrJoinPoint {
     @Override
     public Class<?> targetClass() {
-        Object target = identityPoint.getTarget();
+        Object target = joinPoint.getTarget();
         return !(target instanceof Advised) ? target.getClass()
                 : ((Advised) target).getTargetSource().getTargetClass();
     }
 
     @Override
     public String name() {
-        return identityPoint.getSignature()
+        return joinPoint.getSignature()
                 .getName();
     }
 
     @Override
     public Object method() {
-        Signature signature = identityPoint.getSignature();
+        Signature signature = joinPoint.getSignature();
         return signature instanceof MethodSignature
                 ? ((MethodSignature) signature).getMethod()
                 : signature.getName();
@@ -37,6 +40,6 @@ record AspectLoggingJoinPoint(JoinPoint identityPoint) implements LoggingJoinPoi
 
     @Override
     public List<Object> args() {
-        return Arrays.asList(identityPoint.getArgs());
+        return Arrays.asList(joinPoint.getArgs());
     }
 }

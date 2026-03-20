@@ -6,29 +6,32 @@ import feign.RequestTemplate;
 import feign.Response;
 import feign.ResponseInterceptor;
 import feign.Target;
-import jfr.api.LoggingJoinPoint;
+import jfr.api.JfrJoinPoint;
+import jfr.api.JfrJoinPointFactory;
 import jfr.api.NonReentrantLoggingService;
 import jfr.event.FeignRequestEvent;
 import jfr.test.junit.UidExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.log.LogMessage;
 
-import static jfr.test.hamcrest.PropertiesMatcher.matching;
+import java.util.List;
+
 import static jfr.test.junit.UidExtension.uid;
 import static jfr.test.junit.UidExtension.uidS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.typeCompatibleWith;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -41,7 +44,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 public class JfrFeignRequestInterceptorTest {
     @InjectMocks
     JfrFeignRequestInterceptor subj;
-
+    @Mock
+    JfrJoinPointFactory joinPointFactory;
     @Mock
     NonReentrantLoggingService<FeignRequestEvent> loggingService;
 
@@ -57,28 +61,28 @@ public class JfrFeignRequestInterceptorTest {
         doReturn(method).when(template).method();
         String templateUrl = uidS();
         doReturn(templateUrl).when(template).url();
-        var request = mock(Request.class);
+        var requestName = "request" + uid();
+        var request = mock(Request.class, requestName);
         doReturn(request).when(template).request();
-        doAnswer(inv -> {
-            LoggingJoinPoint actual = inv.getArgument(0);
-            assertThat(actual).is(matching(matcher -> matcher
-                    .add("identityPoint", actual.identityPoint(), null)
-                    .add("targetClass", actual.targetClass(), FeignRequestEvent.class)
-                    .add("name", actual.name(), this, (a, e) -> matcher
-                            .add("class", a.getClass(), typeCompatibleWith(LogMessage.class))
-                            .add("toString", a.toString(), method + " " + targetUrl + " " + templateUrl))
-                    .add("method", actual.method(), this, (a, e) -> matcher
-                            .add("class", a.getClass(), typeCompatibleWith(LogMessage.class))
-                            .add("toString", a.toString(), request.toString()))
-                    .add("args", actual.args(), empty())
-            ));
-            return null;
-        }).when(loggingService).before(any(), any());
+        var joinPoint = mock(JfrJoinPoint.class);
+        doReturn(joinPoint).when(joinPointFactory).create(any(), any(), any(), any());
 
         subj.apply(template);
 
-        verify(loggingService).before(any(), isA(FeignRequestEvent.class));
-        verifyNoMoreInteractions(loggingService, template, target, request);
+        var name = ArgumentCaptor.forClass(LogMessage.class);
+        var methodCaptor = ArgumentCaptor.forClass(LogMessage.class);
+        verify(joinPointFactory).create(eq(FeignRequestEvent.class), name.capture(), methodCaptor.capture(), eq(List.of()));
+        verify(loggingService).before(eq(joinPoint), isA(FeignRequestEvent.class));
+        verify(template, never()).url();
+        verify(template, never()).method();
+        verify(template, never()).request();
+        verifyNoMoreInteractions(joinPointFactory, loggingService, template, target, request);
+
+        assertSoftly(s -> {
+            s.assertThat(name.getValue().toString()).as("name").isEqualTo(method + " " + targetUrl + " " + templateUrl);
+            s.assertThat(methodCaptor.getValue().toString()).as("method").isEqualTo(requestName);
+        });
+        verifyNoMoreInteractions(joinPointFactory, loggingService, template, target, request);
     }
 
     @Test

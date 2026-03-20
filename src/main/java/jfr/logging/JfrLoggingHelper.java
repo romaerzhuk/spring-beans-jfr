@@ -1,6 +1,6 @@
 package jfr.logging;
 
-import jfr.api.LoggingJoinPoint;
+import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ class JfrLoggingHelper {
      * @return {@link LoggingContext} или null
      */
     @Nullable
-    public LoggingContext before(LoggingJoinPoint joinPoint, JfrLoggingContextStrategy strategy, AbstractMethodEvent event, Logger logger) {
+    public LoggingContext before(JfrJoinPoint joinPoint, JfrLoggingContextStrategy strategy, AbstractMethodEvent event, Logger logger) {
         if (!event.isEnabled(joinPoint, logger)) {
             log.trace("before {} {} - disabled", joinPoint, event);
             return null;
@@ -44,7 +44,7 @@ class JfrLoggingHelper {
      * @param joinPoint точка вызвова
      * @param retVal    результат
      */
-    public void afterReturning(LoggingContext context, LoggingJoinPoint joinPoint, Object retVal) {
+    public void afterReturning(LoggingContext context, JfrJoinPoint joinPoint, Object retVal) {
         log.trace("afterReturning {} {}", joinPoint, context);
         if (context.afterReturning(joinPoint, retVal)) {
             contextHolder.removeContext();
@@ -58,7 +58,7 @@ class JfrLoggingHelper {
      * @param joinPoint точка вызова
      * @param cause     причина ошибки
      */
-    public void afterThrowing(LoggingContext context, LoggingJoinPoint joinPoint, Throwable cause) {
+    public void afterThrowing(LoggingContext context, JfrJoinPoint joinPoint, Throwable cause) {
         log.trace("afterThrowing {} {}", context, joinPoint);
         if (context.afterThrowing(joinPoint, cause)) {
             contextHolder.removeContext();

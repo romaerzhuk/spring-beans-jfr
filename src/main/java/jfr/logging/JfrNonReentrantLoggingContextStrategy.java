@@ -1,6 +1,7 @@
 package jfr.logging;
 
-import jfr.api.LoggingJoinPoint;
+import com.google.common.base.Stopwatch;
+import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import jfr.event.NonReentrantMethodEvent;
 
@@ -13,7 +14,12 @@ import java.util.function.Function;
  */
 final class JfrNonReentrantLoggingContextStrategy implements JfrLoggingContextStrategy {
     @Override
-    public LoggingContext createIfReentrant(LoggingJoinPoint joinPoint, Function<LoggingJoinPoint, LoggingContext> factory) {
+    public LoggingContext createContextIfReentrant(JfrJoinPoint joinPoint, Function<JfrJoinPoint, LoggingContext> factory) {
+        return null;
+    }
+
+    @Override
+    public Stopwatch createUnstartedStopwatchOrNull(LoggingContext context) {
         return null;
     }
 

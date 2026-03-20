@@ -1,6 +1,6 @@
 package jfr.logging;
 
-import jfr.api.LoggingJoinPoint;
+import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -23,18 +23,28 @@ final class LoggingCallbackFactory {
      * @param joinPoint точка вызова
      * @param event     событие JFR
      * @param logger    логгер
+     * @param context   контекст регистрации событий
+     * @param strategy  стратегия инициализации
      * @return {@link LoggingCallback}
      */
-    public LoggingCallback create(LoggingJoinPoint joinPoint, AbstractMethodEvent event, Logger logger) {
+    public LoggingCallback create(JfrJoinPoint joinPoint,
+                                  AbstractMethodEvent event,
+                                  Logger logger,
+                                  LoggingContext context,
+                                  JfrLoggingContextStrategy strategy) {
         Class<?> targetClass = joinPoint.targetClass();
+        boolean debugEnabled = logger.isDebugEnabled();
+        Object name = joinPoint.name();
         return new LoggingCallback(
                 joinPoint,
                 event.isEnabled() ? event : null,
-                logger.isDebugEnabled() ? loggerFactory.apply(targetClass) : null,
+                debugEnabled ? loggerFactory.apply(targetClass) : null,
                 properties.logErrorEnabled(),
-                joinPoint.name()
-                        .toString(),
+                name.toString(),
                 targetClass,
-                joinPoint.method());
+                joinPoint.method(),
+                context.callbacks().size(),
+                strategy.createUnstartedStopwatchOrNull(context),
+                debugEnabled ? joinPoint.args() : null);
     }
 }

@@ -1,6 +1,7 @@
 package jfr.logging;
 
-import jfr.api.LoggingJoinPoint;
+import com.google.common.base.Stopwatch;
+import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import jfr.test.junit.MethodSourceHelper;
 import jfr.test.junit.UidExtension;
@@ -13,10 +14,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 
+import java.util.List;
 import java.util.function.Function;
 
 import static jfr.test.assertj.ConditionsHelper.isEqual;
 import static jfr.test.assertj.ConditionsHelper.lazyCondition;
+import static jfr.test.junit.UidExtension.uid;
 import static jfr.test.junit.UidExtension.uidS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.condition.NestableCondition.nestable;
@@ -50,7 +53,7 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         doReturn(true).when(logger).isDebugEnabled();
         var targetLogger = mock(Logger.class, "targetLogger");
         doReturn(targetLogger).when(loggerFactory).apply(TestClass.class);
-        var joinPoint = mock(LoggingJoinPoint.class);
+        var joinPoint = mock(JfrJoinPoint.class);
         doReturn(TestClass.class).when(joinPoint).targetClass();
         var event = mock(TestMethodEvent.class);
         doReturn(enabled).when(event).isEnabled();
@@ -59,11 +62,21 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         doReturn(name).when(joinPoint).name();
         Object method = uidS();
         doReturn(method).when(joinPoint).method();
+        var context = mock(LoggingContext.class);
+        var callbacks = mock(LoggingCallbackStack.class);
+        doReturn(callbacks).when(context).callbacks();
+        int size = uid();
+        doReturn(size).when(callbacks).size();
+        var strategy = mock(JfrLoggingContextStrategy.class);
+        var stopwatch = mock(Stopwatch.class);
+        doReturn(stopwatch).when(strategy).createUnstartedStopwatchOrNull(context);
+        var args = List.of(uidS(), uid());
+        doReturn(args).when(joinPoint).args();
 
-        LoggingCallback actual = subj.create(joinPoint, event, logger);
+        LoggingCallback actual = subj.create(joinPoint, event, logger, context, strategy);
 
-        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, targetLogger, logErrorEnabled, name, method));
-        verifyNoMoreInteractions(loggerFactory, properties, logger, targetLogger, joinPoint, event);
+        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, targetLogger, logErrorEnabled, name, method, size, stopwatch, args));
+        verifyNoMoreInteractions(loggerFactory, properties, logger, targetLogger, joinPoint, event, context, callbacks, strategy, stopwatch);
     }
 
     @ParameterizedTest
@@ -73,7 +86,7 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         }
         var logger = mock(Logger.class, "logger");
         doReturn(false).when(logger).isDebugEnabled();
-        var joinPoint = mock(LoggingJoinPoint.class);
+        var joinPoint = mock(JfrJoinPoint.class);
         doReturn(TestClass.class).when(joinPoint).targetClass();
         var event = mock(TestMethodEvent.class);
         doReturn(enabled).when(event).isEnabled();
@@ -82,29 +95,40 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         doReturn(name).when(joinPoint).name();
         Object method = uidS();
         doReturn(method).when(joinPoint).method();
+        var context = mock(LoggingContext.class);
+        var callbacks = mock(LoggingCallbackStack.class);
+        doReturn(callbacks).when(context).callbacks();
+        int size = uid();
+        doReturn(size).when(callbacks).size();
+        var strategy = mock(JfrLoggingContextStrategy.class);
+        var stopwatch = mock(Stopwatch.class);
+        doReturn(stopwatch).when(strategy).createUnstartedStopwatchOrNull(context);
 
-        LoggingCallback actual = subj.create(joinPoint, event, logger);
+        LoggingCallback actual = subj.create(joinPoint, event, logger, context, strategy);
 
-        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, null, logErrorEnabled, name, method));
-        verifyNoMoreInteractions(loggerFactory, properties, logger, joinPoint, event);
+        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, null, logErrorEnabled, name, method, size, stopwatch, null));
+        verifyNoMoreInteractions(loggerFactory, properties, logger, joinPoint, event, context, callbacks, strategy, stopwatch);
     }
 
-    Condition<LoggingCallback> loggingCallback(LoggingJoinPoint joinPoint,
+    Condition<LoggingCallback> loggingCallback(JfrJoinPoint joinPoint,
                                                AbstractMethodEvent event,
                                                Logger logger,
                                                boolean logErrorEnabled,
                                                String name,
-                                               Object method) {
+                                               Object method,
+                                               int index,
+                                               Stopwatch stopwatch,
+                                               List<?> args) {
         return lazyCondition(actual -> nestable("LoggingCallback",
-                isEqual("joinPoint", actual.joinPoint, joinPoint),
-                isEqual("event", actual.event, event),
-                isEqual("logger", actual.logger, logger),
-                isEqual("logErrorEnabled", actual.logErrorEnabled, logErrorEnabled),
-                isEqual("name", actual.name, name),
-                isEqual("method", actual.method, method),
-                isEqual("prev", actual.prev, null),
-                isEqual("stopwatch", actual.stopwatch, null),
-                isEqual("args", actual.args, null)
+                isEqual("joinPoint", actual.joinPoint(), joinPoint),
+                isEqual("event", actual.event(), event),
+                isEqual("logger", actual.logger(), logger),
+                isEqual("logErrorEnabled", actual.logErrorEnabled(), logErrorEnabled),
+                isEqual("name", actual.name(), name),
+                isEqual("method", actual.method(), method),
+                isEqual("index", actual.index(), index),
+                isEqual("stopwatch", actual.stopwatch(), stopwatch),
+                isEqual("args", actual.args(), args)
         ));
     }
 }

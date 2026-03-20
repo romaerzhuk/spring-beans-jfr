@@ -1,8 +1,8 @@
 package jfr.quartz;
 
 import com.google.common.base.Throwables;
+import jfr.api.JfrJoinPointFactory;
 import jfr.api.JfrLoggingService;
-import jfr.api.LoggingJoinPoint;
 import lombok.RequiredArgsConstructor;
 import org.quartz.Job;
 import org.quartz.Scheduler;
@@ -22,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JfrJobFactory implements JobFactory {
     private final ListableBeanFactory beanFactory;
+    private final JfrJoinPointFactory joinPointFactory;
     private final JfrLoggingService loggingService;
 
     @Override
@@ -30,7 +31,7 @@ public class JfrJobFactory implements JobFactory {
         Job job = delegate.newJob(bundle, scheduler);
         return context -> {
             String execute = "execute";
-            var joinPoint = LoggingJoinPoint.of(null, job.getClass(), execute, execute, List.of(context));
+            var joinPoint = joinPointFactory.create(job.getClass(), execute, execute, List.of(context));
             try {
                 loggingService.proceedCallback(joinPoint, () -> {
                     job.execute(context);

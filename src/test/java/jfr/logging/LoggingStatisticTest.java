@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -18,10 +17,9 @@ import java.util.stream.Stream;
 import static jfr.test.hamcrest.PropertiesMatcher.matching;
 import static jfr.test.junit.UidExtension.uid;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -65,9 +63,8 @@ public class LoggingStatisticTest {
                 Stream.of(-5, -2, -1, 0, 1, 2, 5));
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void commit(boolean hasEvent) {
+    @Test
+    void commit() {
         int count = uid();
         long min = uid();
         long avg = uid();
@@ -79,8 +76,8 @@ public class LoggingStatisticTest {
                 .setSum(sum)
                 .setMin(min)
                 .setMax(max)
-                .setEvent(hasEvent ? event : null);
-        lenient().doAnswer(inv -> {
+                .setEvent(event);
+        doAnswer(inv -> {
             assertThat(event).is(matching(matcher -> matcher
                     .add("count", event.count, count)
                     .add("min", event.min, min)
@@ -93,7 +90,22 @@ public class LoggingStatisticTest {
 
         subj.commit();
 
-        verify(event, times(hasEvent ? 1 : 0)).commit();
+        verify(event).commit();
+        verifyNoMoreInteractions(event);
+    }
+
+    @Test
+    void commit_disabled() {
+        var event = mock(MethodInvocationEvent.class);
+        var subj = new LoggingStatistic()
+                .setCount(uid())
+                .setSum(uid())
+                .setMin(uid())
+                .setMax(uid())
+                .setEvent(null);
+
+        subj.commit();
+
         verifyNoMoreInteractions(event);
     }
 

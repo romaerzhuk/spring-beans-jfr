@@ -1,7 +1,8 @@
 package jfr.logging;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
-import jfr.api.LoggingJoinPoint;
+import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import lombok.RequiredArgsConstructor;
 
@@ -17,13 +18,18 @@ final class JfrReentrantLoggingContextStrategy implements JfrLoggingContextStrat
     private final Ticker ticker;
 
     @Override
-    public LoggingContext createIfReentrant(LoggingJoinPoint joinPoint, Function<LoggingJoinPoint, LoggingContext> factory) {
+    public LoggingContext createContextIfReentrant(JfrJoinPoint joinPoint, Function<JfrJoinPoint, LoggingContext> factory) {
         return factory.apply(joinPoint);
     }
 
     @Override
+    public Stopwatch createUnstartedStopwatchOrNull(LoggingContext context) {
+        return Stopwatch.createUnstarted(ticker);
+    }
+
+    @Override
     public LoggingContext init(LoggingContext context, LoggingCallback callback, AbstractMethodEvent event) {
-        context.before(callback, ticker);
+        context.before(callback);
         return context;
     }
 }

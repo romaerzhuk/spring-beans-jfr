@@ -1,6 +1,7 @@
 package jfr.logging;
 
-import jfr.api.LoggingJoinPoint;
+import com.google.common.base.Stopwatch;
+import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import org.junit.jupiter.api.Test;
 
@@ -22,14 +23,24 @@ class JfrNonReentrantLoggingContextStrategyTest {
     JfrNonReentrantLoggingContextStrategy subj = new JfrNonReentrantLoggingContextStrategy();
 
     @Test
-    void createIfReentrant() {
-        var joinPoint = mock(LoggingJoinPoint.class);
-        Function<LoggingJoinPoint, LoggingContext> factory = mock(Function.class);
+    void createContextIfReentrant() {
+        var joinPoint = mock(JfrJoinPoint.class);
+        Function<JfrJoinPoint, LoggingContext> factory = mock(Function.class);
 
-        LoggingContext actual = subj.createIfReentrant(joinPoint, factory);
+        LoggingContext actual = subj.createContextIfReentrant(joinPoint, factory);
 
         assertThat(actual).isNull();
         verifyNoInteractions(joinPoint, factory);
+    }
+
+    @Test
+    void createUnstartedStopwatchOrNull() {
+        var context = mock(LoggingContext.class);
+
+        Stopwatch actual = subj.createUnstartedStopwatchOrNull(context);
+
+        assertThat(actual).isNull();
+        verifyNoMoreInteractions(context);
     }
 
     @Test

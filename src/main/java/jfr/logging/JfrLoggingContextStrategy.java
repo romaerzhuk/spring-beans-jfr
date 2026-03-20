@@ -1,6 +1,7 @@
 package jfr.logging;
 
-import jfr.api.LoggingJoinPoint;
+import com.google.common.base.Stopwatch;
+import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import jfr.event.MethodInvocationEvent;
 import org.jspecify.annotations.Nullable;
@@ -21,10 +22,19 @@ interface JfrLoggingContextStrategy {
      * @return контекст, или null
      */
     @Nullable
-    LoggingContext createIfReentrant(LoggingJoinPoint joinPoint, Function<LoggingJoinPoint, LoggingContext> factory);
+    LoggingContext createContextIfReentrant(JfrJoinPoint joinPoint, Function<JfrJoinPoint, LoggingContext> factory);
 
     /**
-     * Инифиализирует контекст.
+     * Создаёт остановленный {@link Stopwatch}, или возвращает null.
+     *
+     * @param context контекст
+     * @return остановленный {@link Stopwatch}, или null.
+     */
+    @Nullable
+    Stopwatch createUnstartedStopwatchOrNull(LoggingContext context);
+
+    /**
+     * Инициализирует контекст.
      *
      * @param context  контекст
      * @param callback вызов для регистрации в лог или JFR

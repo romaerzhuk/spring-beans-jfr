@@ -1,4 +1,4 @@
-package jfr.config;
+package jfr.logging.test;
 
 import jfr.logging.JfrLoggingConfiguration;
 import org.springframework.context.annotation.ComponentScan;

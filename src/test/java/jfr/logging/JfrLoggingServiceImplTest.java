@@ -1,7 +1,7 @@
 package jfr.logging;
 
+import jfr.api.JfrJoinPoint;
 import jfr.api.JoinPointCallback;
-import jfr.api.LoggingJoinPoint;
 import jfr.event.MethodInvocationEvent;
 import jfr.event.NonReentrantMethodEvent;
 import jfr.test.junit.MethodSourceHelper;
@@ -66,6 +66,8 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         var joinPoint = mock(ProceedingJoinPoint.class);
         Object result = uidS();
         doReturn(result).when(joinPoint).proceed();
+        var jfrJoinPoint = mock(JfrJoinPoint.class);
+        doReturn(jfrJoinPoint).when(contextHolder).wrap(joinPoint);
         Object expected = uidS();
         doAnswer(inv -> {
             JoinPointCallback callback = inv.getArgument(1);
@@ -74,7 +76,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
             assertThat(callback.proceed()).isEqualTo(result);
             verify(joinPoint).proceed();
             return expected;
-        }).when(subj).proceedCallback(eq(LoggingJoinPoint.of(joinPoint)), any());
+        }).when(subj).proceedCallback(eq(jfrJoinPoint), any());
 
         Object actual = subj.proceed(joinPoint);
 
@@ -82,12 +84,12 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         verify(subj).proceed(any());
         verify(subj).proceedCallback(any(), any());
         verify(joinPoint).proceed();
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, joinPoint);
+        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, joinPoint, jfrJoinPoint);
     }
 
     @Test
     void proceedCallback_success() throws Throwable {
-        var joinPoint = mock(LoggingJoinPoint.class);
+        var joinPoint = mock(JfrJoinPoint.class);
         var callback = mock(JoinPointCallback.class);
         var logger = LoggerFactory.getLogger(JfrLoggingServiceImpl.class);
         var context = mock(LoggingContext.class);
@@ -109,7 +111,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
     @ParameterizedTest
     @MethodSource("exceptions")
     void proceedCallback_exception(Throwable thrown) throws Throwable {
-        var joinPoint = mock(LoggingJoinPoint.class);
+        var joinPoint = mock(JfrJoinPoint.class);
         var callback = mock(JoinPointCallback.class);
         var logger = LoggerFactory.getLogger(JfrLoggingServiceImpl.class);
         var context = mock(LoggingContext.class);
@@ -130,7 +132,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
     @ParameterizedTest
     @MethodSource("exceptions")
     void proceedCallback_contextIsNullSuccess() throws Throwable {
-        var joinPoint = mock(LoggingJoinPoint.class);
+        var joinPoint = mock(JfrJoinPoint.class);
         var callback = mock(JoinPointCallback.class);
         var logger = LoggerFactory.getLogger(JfrLoggingServiceImpl.class);
         doReturn(null).when(helper).before(eq(joinPoint), eq(reentrantContextStrategy), isA(MethodInvocationEvent.class), eq(logger));
@@ -150,7 +152,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
     @ParameterizedTest
     @MethodSource("exceptions")
     void proceedCallback_contextIsNullExceptions(Throwable thrown) throws Throwable {
-        var joinPoint = mock(LoggingJoinPoint.class);
+        var joinPoint = mock(JfrJoinPoint.class);
         var callback = mock(JoinPointCallback.class);
         var logger = LoggerFactory.getLogger(JfrLoggingServiceImpl.class);
         doReturn(null).when(helper).before(eq(joinPoint), eq(reentrantContextStrategy), isA(MethodInvocationEvent.class), eq(logger));
@@ -172,7 +174,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
 
     @Test
     void before() {
-        var joinPoint = mock(LoggingJoinPoint.class);
+        var joinPoint = mock(JfrJoinPoint.class);
         var event = mock(TestEvent.class);
 
         subj.before(joinPoint, event);
