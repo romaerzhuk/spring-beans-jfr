@@ -50,7 +50,7 @@ class NoReentrantCallbackByEventClassTest {
 
         assertThat(subj.entrySet()).containsExactlyInAnyOrder(Map.entry(TestEvent1.class, callback[0]), Map.entry(TestEvent2.class, callback[1]));
         var inOrder = inOrder(callback[2]);
-        inOrder.verify(callback[2]).endEvent();
+        inOrder.verify(callback[2]).commitEvent();
         inOrder.verify(callback[2]).logSuccess(null);
         verifyNoMoreInteractions(joinPoint, callback[0], callback[1], callback[2]);
     }
@@ -69,9 +69,9 @@ class NoReentrantCallbackByEventClassTest {
         subj.removeIfIndexGreaterOrEqual(joinPoint);
 
         assertThat(subj.entrySet()).containsExactly(Map.entry(TestEvent1.class, callback[0]));
-        verify(callback[1]).endEvent();
+        verify(callback[1]).commitEvent();
         verify(callback[1]).logSuccess(null);
-        verify(callback[2]).endEvent();
+        verify(callback[2]).commitEvent();
         verify(callback[2]).logSuccess(null);
         verifyNoMoreInteractions(joinPoint, callback[0], callback[1], callback[2]);
     }

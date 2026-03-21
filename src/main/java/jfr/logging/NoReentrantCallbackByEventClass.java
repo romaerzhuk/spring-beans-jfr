@@ -33,7 +33,7 @@ public class NoReentrantCallbackByEventClass extends HashMap<Class<? extends Abs
             }
             log.warn("removeIfIndexGreaterOrEqual Workaround. Непредвиденное поведение {} {} {}: index >= {} => true",
                     joinPoint, eventClass, callback, index);
-            callback.endEvent();
+            callback.commitEvent();
             callback.logSuccess(null);
             return true;
         });

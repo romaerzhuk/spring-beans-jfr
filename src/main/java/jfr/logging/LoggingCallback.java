@@ -68,6 +68,15 @@ record LoggingCallback(
     }
 
     /**
+     * Фиксирует событие в JFR
+     */
+    public void commitEvent() {
+        if (event != null) {
+            event.commit();
+        }
+    }
+
+    /**
      * Пишет в лог начало вызова.
      */
     public void beginLogger() {
@@ -144,7 +153,7 @@ record LoggingCallback(
     }
 
     /**
-     * Пишет статистику в лог и/или JFR.
+     * Фиксирует статистику в лог и/или JFR.
      *
      * @param context контекст
      */

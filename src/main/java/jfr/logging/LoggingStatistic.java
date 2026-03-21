@@ -50,12 +50,12 @@ class LoggingStatistic {
     /**
      * Обновляет статистику.
      *
-     * @param stopwtch время выполнения
-     * @param event    событие
+     * @param stopwatch время выполнения
+     * @param event     событие
      */
-    public void update(Stopwatch stopwtch, MethodInvocationEvent event) {
+    public void update(Stopwatch stopwatch, MethodInvocationEvent event) {
         count++;
-        long time = stopwtch.elapsed(TimeUnit.NANOSECONDS);
+        long time = stopwatch.elapsed(TimeUnit.NANOSECONDS);
         min = Math.min(time, min);
         if (time > max) {
             max = time;

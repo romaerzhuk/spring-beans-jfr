@@ -113,7 +113,7 @@ record LoggingContext(
             return;
         }
         noReentrantCallbackByClass.removeIfIndexGreaterOrEqual(callback.joinPoint());
-        callback.endEvent();
+        callback.commitEvent();
         callback.logSuccess(retVal);
     }
 
@@ -148,7 +148,7 @@ record LoggingContext(
             return;
         }
         noReentrantCallbackByClass.removeIfIndexGreaterOrEqual(callback.joinPoint());
-        callback.endEvent();
+        callback.commitEvent();
         callback.logFailure(cause);
     }
 

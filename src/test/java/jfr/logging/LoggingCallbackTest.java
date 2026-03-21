@@ -108,13 +108,25 @@ public class LoggingCallbackTest implements MethodSourceHelper {
 
     @ParameterizedTest
     @MethodSource("booleans5")
-    void endEvent_enabled(boolean eventEnabled, boolean loggerEnabled, boolean logErrorEnabled, boolean hasStopwatch, boolean hasArgs) {
+    void endEvent(boolean eventEnabled, boolean loggerEnabled, boolean logErrorEnabled, boolean hasStopwatch, boolean hasArgs) {
         event = mock(MethodInvocationEvent.class);
         subj = newLoggingCallback(eventEnabled, loggerEnabled, logErrorEnabled, hasStopwatch, hasArgs);
 
         subj.endEvent();
 
         verify(event, times(eventEnabled ? 1 : 0)).end();
+        verifyNoMoreInteractions(joinPoint, event, logger, stopwatch);
+    }
+
+    @ParameterizedTest
+    @MethodSource("booleans5")
+    void commitEvent(boolean eventEnabled, boolean loggerEnabled, boolean logErrorEnabled, boolean hasStopwatch, boolean hasArgs) {
+        event = mock(MethodInvocationEvent.class);
+        subj = newLoggingCallback(eventEnabled, loggerEnabled, logErrorEnabled, hasStopwatch, hasArgs);
+
+        subj.commitEvent();
+
+        verify(event, times(eventEnabled ? 1 : 0)).commit();
         verifyNoMoreInteractions(joinPoint, event, logger, stopwatch);
     }
 

@@ -195,7 +195,7 @@ public class LoggingContextTest implements MethodSourceHelper {
         inOrder.verify(noReentrantCallbackByClass).remove(TestEvent.class);
         inOrder.verify(callback).joinPoint();
         inOrder.verify(noReentrantCallbackByClass).removeIfIndexGreaterOrEqual(joinPoint);
-        inOrder.verify(callback).endEvent();
+        inOrder.verify(callback).commitEvent();
         inOrder.verify(callback).logSuccess(retVal);
         verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback, joinPoint);
     }
@@ -258,7 +258,7 @@ public class LoggingContextTest implements MethodSourceHelper {
         inOrder.verify(noReentrantCallbackByClass).remove(TestEvent.class);
         inOrder.verify(callback).joinPoint();
         inOrder.verify(noReentrantCallbackByClass).removeIfIndexGreaterOrEqual(joinPoint);
-        inOrder.verify(callback).endEvent();
+        inOrder.verify(callback).commitEvent();
         inOrder.verify(callback).logFailure(cause);
         verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback, joinPoint);
     }

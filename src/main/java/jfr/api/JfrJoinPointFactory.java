@@ -9,7 +9,7 @@ import java.util.List;
  */
 public interface JfrJoinPointFactory {
     /**
-     * Создаёт {@link JfrJoinPoint}.
+     * Создаёт точку вызова {@link JfrJoinPoint}.
      *
      * @param targetClass целевой класс
      * @param name        краткое имя метода, пишется в лог и JFR

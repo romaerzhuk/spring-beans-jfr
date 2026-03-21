@@ -16,7 +16,7 @@ public interface JfrJoinPoint {
     int index();
 
     /**
-     * Целевой клас компонента Spring.
+     * Целевой класс компонента Spring.
      */
     Class<?> targetClass();
 
