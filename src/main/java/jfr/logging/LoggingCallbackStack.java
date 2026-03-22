@@ -1,7 +1,9 @@
 package jfr.logging;
 
 import jfr.api.JfrJoinPoint;
+import jfr.event.AbstractMethodEvent;
 import jfr.event.MethodInvocationEvent;
+import jfr.event.NonReentrantMethodEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
@@ -14,6 +16,26 @@ import java.util.ArrayDeque;
  */
 @Slf4j
 class LoggingCallbackStack extends ArrayDeque<LoggingCallback> {
+    /**
+     * Удаляет событие {@link NonReentrantMethodEvent} из коллекции.
+     *
+     * @param eventClass класс события
+     * @param context    контекст регистрации событий
+     * @return {@link LoggingCallback} или null
+     */
+    @Nullable
+    public LoggingCallback removeByEventClass(Class<? extends AbstractMethodEvent> eventClass, LoggingContext context) {
+        LoggingCallback callback = peekLast();
+        if (callback == null) {
+            return null;
+        }
+        if (eventClass != callback.event().getClass()) {
+            log.warn("remove Workaround. Непредвиденное поведение: eventClass != last.event.class, eventClass={}, last={}", eventClass, callback);
+            return null;
+        }
+        return removeIfIndexGreaterOrEqual(callback.joinPoint(), context);
+    }
+
     /**
      * Удаляет вызовы, индекс которых больше или равен {@link JfrJoinPoint#index()}.
      *

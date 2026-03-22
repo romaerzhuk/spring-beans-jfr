@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.log.LogMessage;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -34,15 +33,12 @@ import static jfr.test.junit.UidExtension.uid;
 import static jfr.test.junit.UidExtension.uidS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.condition.NestableCondition.nestable;
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -71,8 +67,6 @@ public class LoggingContextTest implements MethodSourceHelper {
     LoggingCallbackStack callbacks;
     @Mock
     Map<Key, LoggingStatistic> statistics;
-    @Mock
-    NoReentrantCallbackByEventClass noReentrantCallbackByClass;
 
     int pointValue;
     long thresholdNanos;
@@ -84,7 +78,7 @@ public class LoggingContextTest implements MethodSourceHelper {
         subj = mock(LoggingContext.class, withSettings()
                 .name("subj")
                 .defaultAnswer(CALLS_REAL_METHODS)
-                .useConstructor(logger, thresholdNanos, statistics, callbacks, noReentrantCallbackByClass));
+                .useConstructor(logger, thresholdNanos, statistics, callbacks));
     }
 
     @Test
@@ -95,8 +89,7 @@ public class LoggingContextTest implements MethodSourceHelper {
                 isEqual("logger", subj.logger(), LoggerFactory.getLogger(LoggingContext.class)),
                 isEqual("thresholdNanos", subj.thresholdNanos(), thresholdNanos),
                 match("statistics", subj.statistics(), anEmptyMap()),
-                match("callbacks", subj.callbacks(), empty()),
-                match("noReentrantCallbackByClass", subj.noReentrantCallbackByClass(), allOf(instanceOf(HashMap.class), anEmptyMap()))
+                match("callbacks", subj.callbacks(), empty())
         ));
     }
 
@@ -115,7 +108,7 @@ public class LoggingContextTest implements MethodSourceHelper {
         inOrder.verify(callback).resume();
         inOrder.verify(callback).beginEvent();
         inOrder.verify(callback).beginLogger();
-        verifyNoMoreInteractions(logger, statistics, callbacks, noReentrantCallbackByClass, callback, prev);
+        verifyNoMoreInteractions(logger, statistics, callbacks, callback, prev);
     }
 
     @Test
@@ -131,22 +124,7 @@ public class LoggingContextTest implements MethodSourceHelper {
         inOrder.verify(callback).resume();
         inOrder.verify(callback).beginEvent();
         inOrder.verify(callback).beginLogger();
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback);
-    }
-
-    @Test
-    void beforeNonReentrant() {
-        doNothing().when(subj).before(any());
-        var callback = mock(LoggingCallback.class);
-        var event = new TestEvent();
-
-        subj.beforeNonReentrant(callback, event);
-
-        var inOrder = inOrder(subj, noReentrantCallbackByClass, callback);
-        inOrder.verify(subj).beforeNonReentrant(any(), any());
-        inOrder.verify(noReentrantCallbackByClass).put(event.getClass(), callback);
-        inOrder.verify(subj).before(callback);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback);
+        verifyNoMoreInteractions(subj, logger, statistics, callbacks, callback);
     }
 
     @ParameterizedTest
@@ -162,9 +140,8 @@ public class LoggingContextTest implements MethodSourceHelper {
 
         assertThat(actual).isEqualTo(index == 0);
         verify(subj).afterReturning(any(), any());
-        verify(noReentrantCallbackByClass).removeIfIndexGreaterOrEqual(joinPoint);
         verify(callback).logSuccess(retVal);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, joinPoint, callback);
+        verifyNoMoreInteractions(subj, logger, statistics, callbacks, joinPoint, callback);
     }
 
     @Test
@@ -177,22 +154,21 @@ public class LoggingContextTest implements MethodSourceHelper {
 
         assertThat(actual).isTrue();
         verify(subj).afterReturning(any(), any());
-        verify(noReentrantCallbackByClass).removeIfIndexGreaterOrEqual(joinPoint);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, joinPoint);
+        verifyNoMoreInteractions(subj, logger, statistics, callbacks, joinPoint);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void afterReturningNonReentrant(boolean hasCallback) {
         var callback = mock(LoggingCallback.class);
-        doReturn(hasCallback ? callback : null).when(noReentrantCallbackByClass).removeEvent(TestEvent.class, subj);
+        doReturn(hasCallback ? callback : null).when(callbacks).removeByEventClass(TestEvent.class, subj);
         Object retVal = uidS();
 
         subj.afterReturningNonReentrant(TestEvent.class, retVal);
 
         verify(subj).afterReturningNonReentrant(any(), any());
         verify(callback, times(hasCallback ? 1 : 0)).logSuccess(retVal);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback);
+        verifyNoMoreInteractions(subj, logger, statistics, callbacks, callback);
     }
 
     @ParameterizedTest
@@ -208,9 +184,8 @@ public class LoggingContextTest implements MethodSourceHelper {
 
         assertThat(actual).isEqualTo(index == 0);
         verify(subj).afterThrowing(any(), any());
-        verify(noReentrantCallbackByClass).removeIfIndexGreaterOrEqual(joinPoint);
         verify(callback).logFailure(cause);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, joinPoint, callback);
+        verifyNoMoreInteractions(subj, logger, statistics, callbacks, joinPoint, callback);
     }
 
     @Test
@@ -223,22 +198,21 @@ public class LoggingContextTest implements MethodSourceHelper {
 
         assertThat(actual).isTrue();
         verify(subj).afterThrowing(any(), any());
-        verify(noReentrantCallbackByClass).removeIfIndexGreaterOrEqual(joinPoint);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, joinPoint);
+        verifyNoMoreInteractions(subj, logger, statistics, callbacks, joinPoint);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void afterThrowingNonReentrant(boolean hasCallback) {
         var callback = mock(LoggingCallback.class);
-        doReturn(hasCallback ? callback : null).when(noReentrantCallbackByClass).removeEvent(TestEvent.class, subj);
+        doReturn(hasCallback ? callback : null).when(callbacks).removeByEventClass(TestEvent.class, subj);
         var cause = new Throwable(uidS());
 
         subj.afterThrowingNonReentrant(TestEvent.class, cause);
 
         verify(subj).afterThrowingNonReentrant(any(), any());
         verify(callback, times(hasCallback ? 1 : 0)).logFailure(cause);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback);
+        verifyNoMoreInteractions(subj, logger, statistics, callbacks, callback);
     }
 
     @Test

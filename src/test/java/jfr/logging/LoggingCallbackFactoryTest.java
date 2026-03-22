@@ -9,7 +9,7 @@ import jfr.test.junit.UidExtension;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -51,8 +51,8 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
     JfrLoggingProperties properties;
 
     @ParameterizedTest
-    @MethodSource("booleans2")
-    void create_debugEnabled(boolean enabled, boolean logErrorEnabled) {
+    @ValueSource(booleans = {false, true})
+    void create_debugEnabled(boolean logErrorEnabled) {
         class TestClass {
         }
         var logger = mock(Logger.class, "logger");
@@ -62,7 +62,6 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         var joinPoint = mock(JfrJoinPoint.class);
         doReturn(TestClass.class).when(joinPoint).targetClass();
         var event = mock(TestMethodEvent.class);
-        doReturn(enabled).when(event).isEnabled();
         doReturn(logErrorEnabled).when(properties).logErrorEnabled();
         String name = uidS();
         doReturn(name).when(joinPoint).name();
@@ -79,15 +78,16 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
 
         LoggingCallback actual = subj.create(joinPoint, event, logger, context);
 
+        assertThat(actual).is(loggingCallback(joinPoint, event, targetLogger, logErrorEnabled, name, method, size, args));
         verifyNoMoreInteractions(loggerFactory, ticker, properties, logger, targetLogger, joinPoint, event, context, callbacks, strategy);
-        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, targetLogger, logErrorEnabled, name, method, size, args));
+
         actual.stopwatch().start();
         verify(ticker).read();
     }
 
     @ParameterizedTest
-    @MethodSource("booleans2")
-    void create_debugDisabled(boolean enabled, boolean logErrorEnabled) {
+    @ValueSource(booleans = {false, true})
+    void create_debugDisabled(boolean logErrorEnabled) {
         class TestClass {
         }
         var logger = mock(Logger.class, "logger");
@@ -95,7 +95,6 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         var joinPoint = mock(JfrJoinPoint.class);
         doReturn(TestClass.class).when(joinPoint).targetClass();
         var event = mock(TestMethodEvent.class);
-        doReturn(enabled).when(event).isEnabled();
         doReturn(logErrorEnabled).when(properties).logErrorEnabled();
         String name = uidS();
         doReturn(name).when(joinPoint).name();
@@ -110,8 +109,9 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
 
         LoggingCallback actual = subj.create(joinPoint, event, logger, context);
 
+        assertThat(actual).is(loggingCallback(joinPoint, event, null, logErrorEnabled, name, method, size, null));
         verifyNoMoreInteractions(loggerFactory, ticker, properties, logger, joinPoint, event, context, callbacks, strategy);
-        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, null, logErrorEnabled, name, method, size, null));
+
         actual.stopwatch().start();
         verify(ticker).read();
     }

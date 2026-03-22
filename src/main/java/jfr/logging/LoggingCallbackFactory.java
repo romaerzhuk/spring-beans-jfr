@@ -29,16 +29,13 @@ final class LoggingCallbackFactory {
      * @param context   контекст регистрации событий
      * @return {@link LoggingCallback}
      */
-    public LoggingCallback create(JfrJoinPoint joinPoint,
-                                  AbstractMethodEvent event,
-                                  Logger logger,
-                                  LoggingContext context) {
+    public LoggingCallback create(JfrJoinPoint joinPoint, AbstractMethodEvent event, Logger logger, LoggingContext context) {
         Class<?> targetClass = joinPoint.targetClass();
         boolean debugEnabled = logger.isDebugEnabled();
         Object name = joinPoint.name();
         return new LoggingCallback(
                 joinPoint,
-                event.isEnabled() ? event : null,
+                event,
                 debugEnabled ? loggerFactory.apply(targetClass) : null,
                 properties.logErrorEnabled(),
                 name.toString(),

@@ -3,7 +3,6 @@ package jfr.logging;
 import com.google.common.base.Stopwatch;
 import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
-import jfr.event.MethodInvocationEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -30,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("LoggingSimilarMessage")
 record LoggingCallback(
         JfrJoinPoint joinPoint,
-        @Nullable
         AbstractMethodEvent event,
         @Nullable
         Logger logger,
@@ -47,31 +45,18 @@ record LoggingCallback(
      * Начинает событие JFR.
      */
     public void beginEvent() {
-        log.trace("beginEvent {} - start", event);
-        if (event != null) {
-            event.beanClass = targetClass;
-            event.method = name;
-            event.begin();
-        }
-        log.trace("beginEvent {} - end", event);
+        log.trace("beginEvent {}", event);
+        event.beanClass = targetClass;
+        event.method = name;
+        event.begin();
     }
 
     /**
      * Завершает подсчёт времени выполнения события JFR.
      */
     public void endEvent() {
-        if (event != null) {
-            event.end();
-        }
-    }
-
-    /**
-     * Фиксирует событие в JFR
-     */
-    public void commitEvent() {
-        if (event != null) {
-            event.commit();
-        }
+        log.trace("endEvent {}", event);
+        event.end();
     }
 
     /**
@@ -131,9 +116,7 @@ record LoggingCallback(
      */
     public void stop(LoggingContext context) {
         stopwatch.stop();
-        if (event != null) {
-            event.max = stopwatch.elapsed(TimeUnit.NANOSECONDS);
-        }
+        event.max = stopwatch.elapsed(TimeUnit.NANOSECONDS);
         context.getStatistic(targetClass, method)
                 .update(stopwatch, event);
     }
@@ -147,8 +130,6 @@ record LoggingCallback(
         if (logger != null) {
             logger.debug("{} {} {} statistics: {}", targetClass.getSimpleName(), method, args, context.toStatistics());
         }
-        if (event instanceof MethodInvocationEvent e) {
-            context.commit(e);
-        }
+        context.commit(event);
     }
 }

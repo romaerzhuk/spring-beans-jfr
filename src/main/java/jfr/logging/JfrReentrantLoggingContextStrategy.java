@@ -1,7 +1,6 @@
 package jfr.logging;
 
 import jfr.api.JfrJoinPoint;
-import jfr.event.AbstractMethodEvent;
 
 import java.util.function.Function;
 
@@ -14,11 +13,5 @@ final class JfrReentrantLoggingContextStrategy implements JfrLoggingContextStrat
     @Override
     public LoggingContext createContextIfReentrant(JfrJoinPoint joinPoint, Function<JfrJoinPoint, LoggingContext> factory) {
         return factory.apply(joinPoint);
-    }
-
-    @Override
-    public LoggingContext init(LoggingContext context, LoggingCallback callback, AbstractMethodEvent event) {
-        context.before(callback);
-        return context;
     }
 }

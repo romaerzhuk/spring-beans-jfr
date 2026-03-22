@@ -2,7 +2,6 @@ package jfr.logging;
 
 import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
-import jfr.event.MethodInvocationEvent;
 import jfr.event.NonReentrantMethodEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -16,11 +15,10 @@ import java.util.Map;
 /**
  * Контекст регистрации событий выполнения методов.
  *
- * @param logger                     логгер
- * @param thresholdNanos             временной порог срабатывания записи статистики в лог или JFR, нс
- * @param statistics                 статистика
- * @param callbacks                  стек вызовов
- * @param noReentrantCallbackByClass вызовы по классам событий, которые не могут вызывать внутри себя другие вызовы
+ * @param logger         логгер
+ * @param thresholdNanos временной порог срабатывания записи статистики в лог или JFR, нс
+ * @param statistics     статистика
+ * @param callbacks      стек вызовов
  * @author Roman_Erzhukov
  */
 @Slf4j
@@ -28,8 +26,7 @@ record LoggingContext(
         Logger logger,
         long thresholdNanos,
         Map<Key, LoggingStatistic> statistics,
-        LoggingCallbackStack callbacks,
-        NoReentrantCallbackByEventClass noReentrantCallbackByClass) {
+        LoggingCallbackStack callbacks) {
 
     /**
      * Ключ хранения статистики.
@@ -49,7 +46,7 @@ record LoggingContext(
      * @param thresholdNanos пороговая длительность для записи в JFR, нс
      */
     public LoggingContext(long thresholdNanos) {
-        this(log, thresholdNanos, new HashMap<>(), new LoggingCallbackStack(), new NoReentrantCallbackByEventClass());
+        this(log, thresholdNanos, new HashMap<>(), new LoggingCallbackStack());
     }
 
     /**
@@ -70,18 +67,6 @@ record LoggingContext(
     }
 
     /**
-     * Выполняется перед выполнением бизнес-метода
-     *
-     * @param callback выполняет регистрацию
-     * @param event    событие
-     */
-    public void beforeNonReentrant(LoggingCallback callback, AbstractMethodEvent event) {
-        log.trace("beforeNonReentrant {} {} - start", this, event);
-        noReentrantCallbackByClass.put(event.getClass(), callback);
-        before(callback); // добавляется в список всегда
-    }
-
-    /**
      * Выполняется после успешного завершения метода.
      *
      * @param joinPoint точка вызова
@@ -90,7 +75,6 @@ record LoggingContext(
      */
     public boolean afterReturning(JfrJoinPoint joinPoint, Object retVal) {
         log.trace("afterReturning {} {}", this, joinPoint);
-        noReentrantCallbackByClass.removeIfIndexGreaterOrEqual(joinPoint);
         LoggingCallback callback = callbacks.removeIfIndexGreaterOrEqual(joinPoint, this);
         if (callback == null) {
             return true;
@@ -107,7 +91,7 @@ record LoggingContext(
      */
     public void afterReturningNonReentrant(Class<? extends NonReentrantMethodEvent> eventClass, Object retVal) {
         log.trace("afterReturningNonReentrant {} {}", this, eventClass);
-        LoggingCallback callback = noReentrantCallbackByClass.removeEvent(eventClass, this);
+        LoggingCallback callback = callbacks.removeByEventClass(eventClass, this);
         if (callback != null) {
             callback.logSuccess(retVal);
         }
@@ -122,7 +106,6 @@ record LoggingContext(
      */
     public boolean afterThrowing(JfrJoinPoint joinPoint, Throwable cause) {
         log.trace("afterThrowing {} {}", this, joinPoint);
-        noReentrantCallbackByClass.removeIfIndexGreaterOrEqual(joinPoint);
         LoggingCallback callback = callbacks.removeIfIndexGreaterOrEqual(joinPoint, this);
         if (callback == null) {
             return true;
@@ -139,7 +122,7 @@ record LoggingContext(
      */
     public void afterThrowingNonReentrant(Class<? extends NonReentrantMethodEvent> eventClass, Throwable cause) {
         log.trace("afterThrowingNonReentrant {} {}", this, eventClass);
-        LoggingCallback callback = noReentrantCallbackByClass.removeEvent(eventClass, this);
+        LoggingCallback callback = callbacks.removeByEventClass(eventClass, this);
         if (callback != null) {
             callback.logFailure(cause);
         }
@@ -161,7 +144,7 @@ record LoggingContext(
      *
      * @param event событие
      */
-    public void commit(MethodInvocationEvent event) {
+    public void commit(AbstractMethodEvent event) {
         if (event.max < thresholdNanos) {
             return;
         }

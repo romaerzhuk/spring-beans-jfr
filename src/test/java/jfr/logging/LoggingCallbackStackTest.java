@@ -1,18 +1,28 @@
 package jfr.logging;
 
 import jfr.api.JfrJoinPoint;
+import jfr.event.AbstractMethodEvent;
 import jfr.test.junit.UidExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static jfr.test.junit.UidExtension.uid;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
@@ -23,7 +33,65 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @ExtendWith({MockitoExtension.class, UidExtension.class})
 @SuppressWarnings("ResultOfMethodCallIgnored")
 class LoggingCallbackStackTest {
-    LoggingCallbackStack subj = new LoggingCallbackStack();
+    static class TestEvent extends AbstractMethodEvent {
+    }
+
+    static class TestEvent2 extends TestEvent {
+    }
+
+    @Spy
+    LoggingCallbackStack subj;
+
+    @Test
+    void removeByEventClass() {
+        var context = mock(LoggingContext.class);
+        var callback = newLoggingCallback();
+        doReturn(callback).when(subj).peekLast();
+        doReturn(new TestEvent()).when(callback).event();
+        var joinPoint = mock(JfrJoinPoint.class);
+        doReturn(joinPoint).when(callback).joinPoint();
+        var expected = newLoggingCallback();
+        doReturn(expected).when(subj).removeIfIndexGreaterOrEqual(joinPoint, context);
+
+        LoggingCallback actual = subj.removeByEventClass(TestEvent.class, context);
+
+        assertThat(actual).isEqualTo(expected);
+        verify(subj).removeByEventClass(any(), any());
+        verifyNoMoreInteractions(subj, context, callback, joinPoint, expected);
+    }
+
+    @MethodSource
+    @ParameterizedTest
+    void removeByEventClass_unexpected(AbstractMethodEvent event, Class<? extends AbstractMethodEvent> eventClass) {
+        var context = mock(LoggingContext.class);
+        var callback = newLoggingCallback();
+        doReturn(callback).when(subj).peekLast();
+        doReturn(event).when(callback).event();
+
+        LoggingCallback actual = subj.removeByEventClass(eventClass, context);
+
+        assertThat(actual).isNull();
+        verify(subj).removeByEventClass(any(), any());
+        verifyNoMoreInteractions(subj, context, callback);
+    }
+
+    static Stream<Arguments> removeByEventClass_unexpected() {
+        return Stream.of(
+                arguments(new TestEvent(), TestEvent2.class),
+                arguments(new TestEvent2(), TestEvent.class));
+    }
+
+    @Test
+    void removeByEventClass_null() {
+        var context = mock(LoggingContext.class);
+        doReturn(null).when(subj).peekLast();
+
+        LoggingCallback actual = subj.removeByEventClass(TestEvent.class, context);
+
+        assertThat(actual).isNull();
+        verify(subj).removeByEventClass(any(), any());
+        verifyNoMoreInteractions(subj, context);
+    }
 
     @Test
     void removeIfIndexGreaterOrEqual() {

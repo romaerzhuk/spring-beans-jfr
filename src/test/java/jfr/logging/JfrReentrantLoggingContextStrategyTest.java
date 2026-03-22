@@ -1,7 +1,6 @@
 package jfr.logging;
 
 import jfr.api.JfrJoinPoint;
-import jfr.event.AbstractMethodEvent;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.Function;
@@ -33,18 +32,5 @@ class JfrReentrantLoggingContextStrategyTest {
         assertThat(actual).isEqualTo(expected);
         verify(factory).apply(joinPoint);
         verifyNoMoreInteractions(joinPoint, factory, expected);
-    }
-
-    @Test
-    void init() {
-        var context = mock(LoggingContext.class);
-        var callback = mock(LoggingCallback.class);
-        var event = mock(AbstractMethodEvent.class);
-
-        LoggingContext actual = subj.init(context, callback, event);
-
-        assertThat(actual).isEqualTo(context);
-        verify(context).before(callback);
-        verifyNoMoreInteractions(context, callback, event);
     }
 }
