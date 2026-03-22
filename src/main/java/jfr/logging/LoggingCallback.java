@@ -9,7 +9,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,7 +39,6 @@ record LoggingCallback(
         Class<?> targetClass,
         Object method,
         int index,
-        @Nullable
         Stopwatch stopwatch,
         @Nullable
         List<Object> args) {
@@ -92,7 +90,7 @@ record LoggingCallback(
      */
     public void logSuccess(Object retVal) {
         if (logger != null) {
-            logger.debug("{} end {}: {} {}", name, args, stopwatchStr(), retVal);
+            logger.debug("{} end {}: {} {}", name, args, stopwatch, retVal);
         }
     }
 
@@ -106,32 +104,24 @@ record LoggingCallback(
             return;
         }
         if (logErrorEnabled) {
-            logger.error("{} end {}: {}", name, args, stopwatchStr(), thrown);
+            logger.error("{} end {}: {}", name, args, stopwatch, thrown);
         } else {
-            logger.debug("{} end {}: {} {}", name, args, stopwatchStr(), thrown.toString());
+            logger.debug("{} end {}: {} {}", name, args, stopwatch, thrown.toString());
         }
-    }
-
-    private Object stopwatchStr() {
-        return Objects.toString(stopwatch(), "");
     }
 
     /**
      * Останавливает stopwatch.
      */
     public void suspend() {
-        if (stopwatch != null) {
-            stopwatch.stop();
-        }
+        stopwatch.stop();
     }
 
     /**
      * Запускает stopwatch
      */
     public void resume() {
-        if (stopwatch != null) {
-            stopwatch.start();
-        }
+        stopwatch.start();
     }
 
     /**
@@ -140,16 +130,12 @@ record LoggingCallback(
      * @param context контекст
      */
     public void stop(LoggingContext context) {
-        if (stopwatch == null) {
-            return;
-        }
         stopwatch.stop();
-        var e = event instanceof MethodInvocationEvent evt ? evt : null;
-        if (e != null) {
-            e.max = stopwatch.elapsed(TimeUnit.NANOSECONDS);
+        if (event != null) {
+            event.max = stopwatch.elapsed(TimeUnit.NANOSECONDS);
         }
         context.getStatistic(targetClass, method)
-                .update(stopwatch, e);
+                .update(stopwatch, event);
     }
 
     /**

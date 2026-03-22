@@ -1,14 +1,8 @@
 package jfr.logging;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Ticker;
 import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.function.Function;
 
@@ -23,13 +17,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
  *
  * @author Roman_Erzhukov
  */
-@ExtendWith(MockitoExtension.class)
 @SuppressWarnings("unchecked")
 class JfrReentrantLoggingContextStrategyTest {
-    @InjectMocks
-    JfrReentrantLoggingContextStrategy subj;
-    @Mock
-    Ticker ticker;
+    JfrReentrantLoggingContextStrategy subj = new JfrReentrantLoggingContextStrategy();
 
     @Test
     void createContextIfReentrant() {
@@ -41,17 +31,8 @@ class JfrReentrantLoggingContextStrategyTest {
         LoggingContext actual = subj.createContextIfReentrant(joinPoint, factory);
 
         assertThat(actual).isEqualTo(expected);
-        verifyNoMoreInteractions(ticker, joinPoint, factory, expected);
-    }
-
-    @Test
-    void createUnstartedStopwatchOrNull() {
-        var context = mock(LoggingContext.class);
-
-        Stopwatch actual = subj.createUnstartedStopwatchOrNull(context);
-
-        assertThat(actual.isRunning()).isFalse();
-        verifyNoMoreInteractions(ticker, context);
+        verify(factory).apply(joinPoint);
+        verifyNoMoreInteractions(joinPoint, factory, expected);
     }
 
     @Test
@@ -64,6 +45,6 @@ class JfrReentrantLoggingContextStrategyTest {
 
         assertThat(actual).isEqualTo(context);
         verify(context).before(callback);
-        verifyNoMoreInteractions(ticker, context, callback, event);
+        verifyNoMoreInteractions(context, callback, event);
     }
 }

@@ -11,9 +11,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
  * <p>{@link JfrLoggingService#proceed(ProceedingJoinPoint)} и {@link JfrLoggingService#proceedCallback(JfrJoinPoint, JoinPointCallback)}
  * обеспечивают гарантию завершающих вызов внутри своей реализации.</p>
  *
- * <p>Для некоторых событий, в частности {@link FeignRequestEvent}, не удалось воспользоваться этими вызовами.
- * Пришлось пожертвовать возможностью повторного вхождения в метод и исключить
- * {@link NonReentrantMethodEvent} из подсчёта статистики времени выполнения вложенных вызовов: в JFR пишется каждое событие.</p>
+ * <p>Для {@link FeignRequestEvent}, не удалось воспользоваться этими вызовами. Пришлось пожертвовать возможностью повторного вхождения в метод.</p>
  *
  * @author Roman_Erzhukov
  */

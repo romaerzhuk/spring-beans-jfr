@@ -78,8 +78,7 @@ record LoggingContext(
     public void beforeNonReentrant(LoggingCallback callback, AbstractMethodEvent event) {
         log.trace("beforeNonReentrant {} {} - start", this, event);
         noReentrantCallbackByClass.put(event.getClass(), callback);
-        callback.beginEvent();
-        callback.beginLogger();
+        before(callback); // добавляется в список всегда
     }
 
     /**
@@ -108,13 +107,10 @@ record LoggingContext(
      */
     public void afterReturningNonReentrant(Class<? extends NonReentrantMethodEvent> eventClass, Object retVal) {
         log.trace("afterReturningNonReentrant {} {}", this, eventClass);
-        LoggingCallback callback = noReentrantCallbackByClass.remove(eventClass);
-        if (callback == null) {
-            return;
+        LoggingCallback callback = noReentrantCallbackByClass.removeEvent(eventClass, this);
+        if (callback != null) {
+            callback.logSuccess(retVal);
         }
-        noReentrantCallbackByClass.removeIfIndexGreaterOrEqual(callback.joinPoint());
-        callback.commitEvent();
-        callback.logSuccess(retVal);
     }
 
     /**
@@ -143,13 +139,10 @@ record LoggingContext(
      */
     public void afterThrowingNonReentrant(Class<? extends NonReentrantMethodEvent> eventClass, Throwable cause) {
         log.trace("afterThrowingNonReentrant {} {}", this, eventClass);
-        LoggingCallback callback = noReentrantCallbackByClass.remove(eventClass);
-        if (callback == null) {
-            return;
+        LoggingCallback callback = noReentrantCallbackByClass.removeEvent(eventClass, this);
+        if (callback != null) {
+            callback.logFailure(cause);
         }
-        noReentrantCallbackByClass.removeIfIndexGreaterOrEqual(callback.joinPoint());
-        callback.commitEvent();
-        callback.logFailure(cause);
     }
 
     /**

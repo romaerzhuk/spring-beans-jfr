@@ -1,6 +1,6 @@
 package jfr.api;
 
-import jfr.event.MethodInvocationEvent;
+import jfr.event.FeignRequestEvent;
 import jfr.event.NonReentrantMethodEvent;
 import org.aspectj.lang.ProceedingJoinPoint;
 
@@ -13,9 +13,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
  * <p>{@link JfrLoggingService#proceed(ProceedingJoinPoint)} и {@link JfrLoggingService#proceedCallback(JfrJoinPoint, JoinPointCallback)}
  * обеспечивают гарантию завершающих вызов внутри своей реализации. Если порядок вызовов не будет соблюдаться, возникнет утечка памяти.</p>
  *
- * <p>Тут пришлось пожертвовать возможностью повторного вхождения в метод.
- * По этой же причине {@link MethodInvocationEvent} не участвует в подсчёте статистики времени выполнения вложенных вызовов.
- * В JFR пишется каждое событие.</p>
+ * <p>Для {@link FeignRequestEvent}, не удалось воспользоваться этими вызовами. Пришлось пожертвовать возможностью повторного вхождения в метод.</p>
  *
  * @param <E> тип события
  * @author Roman_Erzhukov

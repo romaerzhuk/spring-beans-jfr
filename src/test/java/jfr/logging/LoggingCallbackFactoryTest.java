@@ -1,6 +1,7 @@
 package jfr.logging;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Ticker;
 import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import jfr.test.junit.MethodSourceHelper;
@@ -19,12 +20,15 @@ import java.util.function.Function;
 
 import static jfr.test.assertj.ConditionsHelper.isEqual;
 import static jfr.test.assertj.ConditionsHelper.lazyCondition;
+import static jfr.test.assertj.ConditionsHelper.match;
 import static jfr.test.junit.UidExtension.uid;
 import static jfr.test.junit.UidExtension.uidS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.condition.NestableCondition.nestable;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
@@ -41,6 +45,8 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
     LoggingCallbackFactory subj;
     @Mock
     Function<Class<?>, Logger> loggerFactory;
+    @Mock
+    Ticker ticker;
     @Mock
     JfrLoggingProperties properties;
 
@@ -68,15 +74,15 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         int size = uid();
         doReturn(size).when(callbacks).size();
         var strategy = mock(JfrLoggingContextStrategy.class);
-        var stopwatch = mock(Stopwatch.class);
-        doReturn(stopwatch).when(strategy).createUnstartedStopwatchOrNull(context);
         var args = List.of(uidS(), uid());
         doReturn(args).when(joinPoint).args();
 
-        LoggingCallback actual = subj.create(joinPoint, event, logger, context, strategy);
+        LoggingCallback actual = subj.create(joinPoint, event, logger, context);
 
-        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, targetLogger, logErrorEnabled, name, method, size, stopwatch, args));
-        verifyNoMoreInteractions(loggerFactory, properties, logger, targetLogger, joinPoint, event, context, callbacks, strategy, stopwatch);
+        verifyNoMoreInteractions(loggerFactory, ticker, properties, logger, targetLogger, joinPoint, event, context, callbacks, strategy);
+        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, targetLogger, logErrorEnabled, name, method, size, args));
+        actual.stopwatch().start();
+        verify(ticker).read();
     }
 
     @ParameterizedTest
@@ -101,13 +107,13 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         int size = uid();
         doReturn(size).when(callbacks).size();
         var strategy = mock(JfrLoggingContextStrategy.class);
-        var stopwatch = mock(Stopwatch.class);
-        doReturn(stopwatch).when(strategy).createUnstartedStopwatchOrNull(context);
 
-        LoggingCallback actual = subj.create(joinPoint, event, logger, context, strategy);
+        LoggingCallback actual = subj.create(joinPoint, event, logger, context);
 
-        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, null, logErrorEnabled, name, method, size, stopwatch, null));
-        verifyNoMoreInteractions(loggerFactory, properties, logger, joinPoint, event, context, callbacks, strategy, stopwatch);
+        verifyNoMoreInteractions(loggerFactory, ticker, properties, logger, joinPoint, event, context, callbacks, strategy);
+        assertThat(actual).is(loggingCallback(joinPoint, enabled ? event : null, null, logErrorEnabled, name, method, size, null));
+        actual.stopwatch().start();
+        verify(ticker).read();
     }
 
     Condition<LoggingCallback> loggingCallback(JfrJoinPoint joinPoint,
@@ -117,7 +123,6 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
                                                String name,
                                                Object method,
                                                int index,
-                                               Stopwatch stopwatch,
                                                List<?> args) {
         return lazyCondition(actual -> nestable("LoggingCallback",
                 isEqual("joinPoint", actual.joinPoint(), joinPoint),
@@ -127,7 +132,8 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
                 isEqual("name", actual.name(), name),
                 isEqual("method", actual.method(), method),
                 isEqual("index", actual.index(), index),
-                isEqual("stopwatch", actual.stopwatch(), stopwatch),
+                match("stopwatch", actual.stopwatch(), instanceOf(Stopwatch.class)),
+                isEqual("stopwatch.running", actual.stopwatch().isRunning(), false),
                 isEqual("args", actual.args(), args)
         ));
     }

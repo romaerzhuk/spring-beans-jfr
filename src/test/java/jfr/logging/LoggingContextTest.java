@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -135,6 +136,7 @@ public class LoggingContextTest implements MethodSourceHelper {
 
     @Test
     void beforeNonReentrant() {
+        doNothing().when(subj).before(any());
         var callback = mock(LoggingCallback.class);
         var event = new TestEvent();
 
@@ -142,9 +144,8 @@ public class LoggingContextTest implements MethodSourceHelper {
 
         var inOrder = inOrder(subj, noReentrantCallbackByClass, callback);
         inOrder.verify(subj).beforeNonReentrant(any(), any());
-        inOrder.verify(noReentrantCallbackByClass).put(TestEvent.class, callback);
-        inOrder.verify(callback).beginEvent();
-        inOrder.verify(callback).beginLogger();
+        inOrder.verify(noReentrantCallbackByClass).put(event.getClass(), callback);
+        inOrder.verify(subj).before(callback);
         verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback);
     }
 
@@ -180,35 +181,18 @@ public class LoggingContextTest implements MethodSourceHelper {
         verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, joinPoint);
     }
 
-    @Test
-    void afterReturningNonReentrant() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void afterReturningNonReentrant(boolean hasCallback) {
         var callback = mock(LoggingCallback.class);
-        doReturn(callback).when(noReentrantCallbackByClass).remove(TestEvent.class);
-        var joinPoint = mock(JfrJoinPoint.class);
-        doReturn(joinPoint).when(callback).joinPoint();
-        Object retVal = uidS();
-
-        subj.afterReturningNonReentrant(TestEvent.class, retVal);
-
-        var inOrder = inOrder(subj, noReentrantCallbackByClass, callback);
-        inOrder.verify(subj).afterReturningNonReentrant(any(), any());
-        inOrder.verify(noReentrantCallbackByClass).remove(TestEvent.class);
-        inOrder.verify(callback).joinPoint();
-        inOrder.verify(noReentrantCallbackByClass).removeIfIndexGreaterOrEqual(joinPoint);
-        inOrder.verify(callback).commitEvent();
-        inOrder.verify(callback).logSuccess(retVal);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback, joinPoint);
-    }
-
-    @Test
-    void afterReturningNonReentrant_null() {
+        doReturn(hasCallback ? callback : null).when(noReentrantCallbackByClass).removeEvent(TestEvent.class, subj);
         Object retVal = uidS();
 
         subj.afterReturningNonReentrant(TestEvent.class, retVal);
 
         verify(subj).afterReturningNonReentrant(any(), any());
-        verify(noReentrantCallbackByClass).remove(TestEvent.class);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass);
+        verify(callback, times(hasCallback ? 1 : 0)).logSuccess(retVal);
+        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback);
     }
 
     @ParameterizedTest
@@ -243,35 +227,18 @@ public class LoggingContextTest implements MethodSourceHelper {
         verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, joinPoint);
     }
 
-    @Test
-    void afterThrowingNonReentrant() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void afterThrowingNonReentrant(boolean hasCallback) {
         var callback = mock(LoggingCallback.class);
-        doReturn(callback).when(noReentrantCallbackByClass).remove(TestEvent.class);
-        var joinPoint = mock(JfrJoinPoint.class);
-        doReturn(joinPoint).when(callback).joinPoint();
-        var cause = new Throwable(uidS());
-
-        subj.afterThrowingNonReentrant(TestEvent.class, cause);
-
-        var inOrder = inOrder(subj, noReentrantCallbackByClass, callback);
-        inOrder.verify(subj).afterThrowingNonReentrant(any(), any());
-        inOrder.verify(noReentrantCallbackByClass).remove(TestEvent.class);
-        inOrder.verify(callback).joinPoint();
-        inOrder.verify(noReentrantCallbackByClass).removeIfIndexGreaterOrEqual(joinPoint);
-        inOrder.verify(callback).commitEvent();
-        inOrder.verify(callback).logFailure(cause);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback, joinPoint);
-    }
-
-    @Test
-    void afterThrowingNonReentrant_null() {
+        doReturn(hasCallback ? callback : null).when(noReentrantCallbackByClass).removeEvent(TestEvent.class, subj);
         var cause = new Throwable(uidS());
 
         subj.afterThrowingNonReentrant(TestEvent.class, cause);
 
         verify(subj).afterThrowingNonReentrant(any(), any());
-        verify(noReentrantCallbackByClass).remove(TestEvent.class);
-        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass);
+        verify(callback, times(hasCallback ? 1 : 0)).logFailure(cause);
+        verifyNoMoreInteractions(subj, logger, statistics, callbacks, noReentrantCallbackByClass, callback);
     }
 
     @Test

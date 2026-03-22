@@ -1,5 +1,7 @@
 package jfr.logging;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Ticker;
 import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 final class LoggingCallbackFactory {
     private final Function<Class<?>, Logger> loggerFactory;
+    private final Ticker ticker;
     private final JfrLoggingProperties properties;
 
     /**
@@ -24,14 +27,12 @@ final class LoggingCallbackFactory {
      * @param event     событие JFR
      * @param logger    логгер
      * @param context   контекст регистрации событий
-     * @param strategy  стратегия инициализации
      * @return {@link LoggingCallback}
      */
     public LoggingCallback create(JfrJoinPoint joinPoint,
                                   AbstractMethodEvent event,
                                   Logger logger,
-                                  LoggingContext context,
-                                  JfrLoggingContextStrategy strategy) {
+                                  LoggingContext context) {
         Class<?> targetClass = joinPoint.targetClass();
         boolean debugEnabled = logger.isDebugEnabled();
         Object name = joinPoint.name();
@@ -44,7 +45,7 @@ final class LoggingCallbackFactory {
                 targetClass,
                 joinPoint.method(),
                 context.callbacks().size(),
-                strategy.createUnstartedStopwatchOrNull(context),
+                Stopwatch.createUnstarted(ticker),
                 debugEnabled ? joinPoint.args() : null);
     }
 }

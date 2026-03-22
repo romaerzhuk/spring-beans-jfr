@@ -69,7 +69,7 @@ final class JfrLoggingContextHolder implements JfrJoinPointFactory, DisposableBe
             }
             setContext(context);
         }
-        LoggingCallback callback = callbackFactory.create(joinPoint, event, logger, context, strategy);
+        LoggingCallback callback = callbackFactory.create(joinPoint, event, logger, context);
         return strategy.init(context, callback, event);
     }
 

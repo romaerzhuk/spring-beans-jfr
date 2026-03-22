@@ -4,6 +4,7 @@ import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import jfr.event.NonReentrantMethodEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 
@@ -13,7 +14,32 @@ import java.util.HashMap;
  * @author Roman_Erzhukov
  */
 @Slf4j
-public class NoReentrantCallbackByEventClass extends HashMap<Class<? extends AbstractMethodEvent>, LoggingCallback> {
+class NoReentrantCallbackByEventClass extends HashMap<Class<? extends AbstractMethodEvent>, LoggingCallback> {
+    /**
+     * Удаляет событие {@link NonReentrantMethodEvent} из коллекции.
+     *
+     * @param eventClass класс события
+     * @param context    контекст регистрации событий
+     * @return {@link LoggingCallback} или null
+     */
+    @Nullable
+    LoggingCallback removeEvent(Class<? extends AbstractMethodEvent> eventClass, LoggingContext context) {
+        LoggingCallback callback = remove(eventClass);
+        if (callback == null) {
+            return null;
+        }
+        LoggingCallbackStack callbacks = context.callbacks();
+        if (callback == callbacks.peekLast()) { // штатная ситуация
+            removeIfIndexGreaterOrEqual(callback.joinPoint());
+            callbacks.removeIfIndexGreaterOrEqual(callback.joinPoint(), context);
+        } else {
+            log.warn("remove Workaround. Непредвиденное поведение:" +
+                    " callback != last, callback={}, last={}", callback, callbacks.peekLast());
+            callback.commitEvent();
+        }
+        return callback;
+    }
+
     /**
      * Удаляет вызовы, индекс которых больше или равен {@link JfrJoinPoint#index()}.
      *
@@ -21,7 +47,7 @@ public class NoReentrantCallbackByEventClass extends HashMap<Class<? extends Abs
      *
      * @param joinPoint точка вызова
      */
-    public void removeIfIndexGreaterOrEqual(JfrJoinPoint joinPoint) {
+    void removeIfIndexGreaterOrEqual(JfrJoinPoint joinPoint) {
         log.trace("removeIfIndexGreaterOrEqual {}", joinPoint);
         int index = joinPoint.index();
         entrySet().removeIf(entry -> {

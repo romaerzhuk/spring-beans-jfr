@@ -1,7 +1,7 @@
 package jfr.logging;
 
 import com.google.common.base.Stopwatch;
-import jfr.event.MethodInvocationEvent;
+import jfr.event.AbstractMethodEvent;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -45,7 +45,7 @@ class LoggingStatistic {
      * Событие с максимальным временем выполнения.
      */
     @Nullable
-    private MethodInvocationEvent event;
+    private AbstractMethodEvent event;
 
     /**
      * Обновляет статистику.
@@ -53,7 +53,7 @@ class LoggingStatistic {
      * @param stopwatch время выполнения
      * @param event     событие
      */
-    public void update(Stopwatch stopwatch, MethodInvocationEvent event) {
+    public void update(Stopwatch stopwatch, AbstractMethodEvent event) {
         count++;
         long time = stopwatch.elapsed(TimeUnit.NANOSECONDS);
         min = Math.min(time, min);

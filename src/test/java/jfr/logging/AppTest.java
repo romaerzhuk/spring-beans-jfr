@@ -43,7 +43,7 @@ public class AppTest {
             var spy = spy((LoggingCallback) inv.callRealMethod());
             callbacks.add(spy);
             return spy;
-        }).when(callbackFactory).create(any(), any(), any(), any(), any());
+        }).when(callbackFactory).create(any(), any(), any(), any());
 
         String actual = helloWorldService.hello("мир", 70);
 

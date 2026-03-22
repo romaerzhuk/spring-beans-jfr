@@ -1,6 +1,5 @@
 package jfr.logging;
 
-import com.google.common.base.Stopwatch;
 import jfr.api.JfrJoinPoint;
 import jfr.event.AbstractMethodEvent;
 import org.junit.jupiter.api.Test;
@@ -31,16 +30,6 @@ class JfrNonReentrantLoggingContextStrategyTest {
 
         assertThat(actual).isNull();
         verifyNoInteractions(joinPoint, factory);
-    }
-
-    @Test
-    void createUnstartedStopwatchOrNull() {
-        var context = mock(LoggingContext.class);
-
-        Stopwatch actual = subj.createUnstartedStopwatchOrNull(context);
-
-        assertThat(actual).isNull();
-        verifyNoMoreInteractions(context);
     }
 
     @Test

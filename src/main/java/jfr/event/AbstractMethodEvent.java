@@ -2,6 +2,7 @@ package jfr.event;
 
 import jdk.jfr.Event;
 import jdk.jfr.Label;
+import jdk.jfr.Timespan;
 import jfr.api.JfrJoinPoint;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,35 @@ public abstract class AbstractMethodEvent extends Event {
      * Вызываемый метод.
      */
     public String method;
+
+    /**
+     * Суммарное время выполнения без учёта вложенных методов, нс.
+     */
+    @Timespan
+    public long sum;
+
+    /**
+     * Количество вызовов.
+     */
+    public int count;
+
+    /**
+     * Максимальное время выполнения без учёта вложенных методов, нс.
+     */
+    @Timespan
+    public long max;
+
+    /**
+     * Среднее время выполнения без учёта вложенных методов, нс.
+     */
+    @Timespan
+    public long avg;
+
+    /**
+     * Минимальное время выполнения без учёта вложенных методов, нс.
+     */
+    @Timespan
+    public long min;
 
     @Override
     public String toString() {

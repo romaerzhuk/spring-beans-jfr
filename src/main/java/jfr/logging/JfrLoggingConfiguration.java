@@ -53,12 +53,12 @@ public class JfrLoggingConfiguration {
 
     @Bean
     LoggingCallbackFactory jfrLoggingCallbackFactory() {
-        return new LoggingCallbackFactory(LoggerFactory::getLogger, jfrLoggingProperties);
+        return new LoggingCallbackFactory(LoggerFactory::getLogger, Ticker.systemTicker(), jfrLoggingProperties);
     }
 
     @Bean
     JfrReentrantLoggingContextStrategy jfrReentrantLoggingContextStrategy() {
-        return new JfrReentrantLoggingContextStrategy(Ticker.systemTicker());
+        return new JfrReentrantLoggingContextStrategy();
     }
 
     @Bean

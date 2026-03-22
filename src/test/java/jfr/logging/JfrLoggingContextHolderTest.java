@@ -154,7 +154,7 @@ class JfrLoggingContextHolderTest {
         var event = mock(AbstractMethodEvent.class);
         var logger = mock(Logger.class);
         var callback = mock(LoggingCallback.class);
-        doReturn(callback).when(callbackFactory).create(joinPoint, event, logger, created, strategy);
+        doReturn(callback).when(callbackFactory).create(joinPoint, event, logger, created);
         var expected = mock(LoggingContext.class, "expected");
         doReturn(expected).when(strategy).init(created, callback, event);
 
@@ -176,7 +176,7 @@ class JfrLoggingContextHolderTest {
         var found = mock(LoggingContext.class, "found");
         doReturn(found).when(subj).getContext();
         var callback = mock(LoggingCallback.class);
-        doReturn(callback).when(callbackFactory).create(joinPoint, event, logger, found, strategy);
+        doReturn(callback).when(callbackFactory).create(joinPoint, event, logger, found);
         var expected = mock(LoggingContext.class, "expected");
         doReturn(expected).when(strategy).init(found, callback, event);
 
