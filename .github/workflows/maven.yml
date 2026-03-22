@@ -73,7 +73,7 @@ jobs:
       - name: Delete old package versions
         uses: actions/delete-package-versions@v5
         with:
-          package-name: 'spring-beans-jfr'
+          package-name: 'jfr.spring-beans-jfr'
           package-type: 'maven'
           min-versions-to-keep: 10  # хранить последние 10 версий
           token: ${{ secrets.GITHUB_TOKEN }}
