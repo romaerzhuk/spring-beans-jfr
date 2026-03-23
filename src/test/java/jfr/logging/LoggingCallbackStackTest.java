@@ -34,6 +34,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @SuppressWarnings("ResultOfMethodCallIgnored")
 class LoggingCallbackStackTest {
     static class TestEvent extends AbstractMethodEvent {
+        @Override
+        public boolean isReentrant() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     static class TestEvent2 extends TestEvent {

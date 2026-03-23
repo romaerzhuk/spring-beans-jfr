@@ -147,22 +147,22 @@ class JfrLoggingContextHolderTest {
     void getOrCreateIfReentrant_create() {
         doReturn(null).when(subj).getContext();
         var joinPoint = mock(JfrJoinPoint.class);
-        var strategy = mock(JfrLoggingContextStrategy.class);
         var expected = mock(LoggingContext.class);
-        doReturn(expected).when(strategy).createContextIfReentrant(joinPoint, contextFactory);
+        doReturn(expected).when(contextFactory).apply(joinPoint);
         doNothing().when(subj).setContext(any());
         var event = mock(AbstractMethodEvent.class);
+        doReturn(true).when(event).isReentrant();
         var logger = mock(Logger.class);
         var callback = mock(LoggingCallback.class);
         doReturn(callback).when(callbackFactory).create(joinPoint, event, logger, expected);
 
-        LoggingContext actual = subj.getOrCreateIfReentrant(joinPoint, event, logger, strategy);
+        LoggingContext actual = subj.getOrCreateIfReentrant(joinPoint, event, logger);
 
         assertThat(actual).isEqualTo(expected);
-        verify(subj).getOrCreateIfReentrant(any(), any(), any(), any());
+        verify(subj).getOrCreateIfReentrant(any(), any(), any());
         verify(subj).setContext(expected);
         verify(expected).before(callback);
-        verifyNoMoreInteractions(subj, context, contextFactory, callbackFactory, joinPoint, strategy, expected, event, logger, callback);
+        verifyNoMoreInteractions(subj, context, contextFactory, callbackFactory, joinPoint, expected, event, logger, callback);
     }
 
     @Test
@@ -170,34 +170,32 @@ class JfrLoggingContextHolderTest {
         var joinPoint = mock(JfrJoinPoint.class);
         var event = mock(AbstractMethodEvent.class);
         var logger = mock(Logger.class);
-        var strategy = mock(JfrLoggingContextStrategy.class);
         var expected = mock(LoggingContext.class);
         doReturn(expected).when(subj).getContext();
         var callback = mock(LoggingCallback.class);
         doReturn(callback).when(callbackFactory).create(joinPoint, event, logger, expected);
 
-        LoggingContext actual = subj.getOrCreateIfReentrant(joinPoint, event, logger, strategy);
+        LoggingContext actual = subj.getOrCreateIfReentrant(joinPoint, event, logger);
 
         assertThat(actual).isEqualTo(expected);
-        verify(subj).getOrCreateIfReentrant(any(), any(), any(), any());
+        verify(subj).getOrCreateIfReentrant(any(), any(), any());
         verify(expected).before(callback);
-        verifyNoMoreInteractions(subj, context, contextFactory, callbackFactory, joinPoint, event, logger, strategy, expected, callback);
+        verifyNoMoreInteractions(subj, context, contextFactory, callbackFactory, joinPoint, event, logger, expected, callback);
     }
 
     @Test
     void getOrCreateIfReentrant_notExistsAndNotReentrant() {
         var joinPoint = mock(JfrJoinPoint.class);
         var event = mock(AbstractMethodEvent.class);
+        doReturn(false).when(event).isReentrant();
         var logger = mock(Logger.class);
-        var strategy = mock(JfrLoggingContextStrategy.class);
         doReturn(null).when(subj).getContext();
 
-        LoggingContext actual = subj.getOrCreateIfReentrant(joinPoint, event, logger, strategy);
+        LoggingContext actual = subj.getOrCreateIfReentrant(joinPoint, event, logger);
 
         assertThat(actual).isNull();
-        verify(subj).getOrCreateIfReentrant(any(), any(), any(), any());
-        verify(strategy).createContextIfReentrant(joinPoint, contextFactory);
-        verifyNoMoreInteractions(subj, context, contextFactory, callbackFactory, joinPoint, event, logger, strategy);
+        verify(subj).getOrCreateIfReentrant(any(), any(), any());
+        verifyNoMoreInteractions(subj, context, contextFactory, callbackFactory, joinPoint, event, logger);
     }
 
     @Test

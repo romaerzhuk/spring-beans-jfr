@@ -21,18 +21,17 @@ class JfrLoggingHelper {
      * Возвращает {@link LoggingContext} перед запуском целевого метода, или null.
      *
      * @param joinPoint точка вызова
-     * @param strategy  стратегия создания контекста
      * @param event     событие JFR
      * @param logger    логгер
      * @return {@link LoggingContext} или null
      */
     @Nullable
-    public LoggingContext before(JfrJoinPoint joinPoint, JfrLoggingContextStrategy strategy, AbstractMethodEvent event, Logger logger) {
+    public LoggingContext before(JfrJoinPoint joinPoint, AbstractMethodEvent event, Logger logger) {
         if (!event.isEnabled(joinPoint, logger)) {
             log.trace("before {} {} - disabled", joinPoint, event);
             return null;
         }
-        LoggingContext context = contextHolder.getOrCreateIfReentrant(joinPoint, event, logger, strategy);
+        LoggingContext context = contextHolder.getOrCreateIfReentrant(joinPoint, event, logger);
         log.trace("before {} {} => {}", joinPoint, event, context);
         return context;
     }

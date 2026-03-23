@@ -39,6 +39,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @ExtendWith({MockitoExtension.class, UidExtension.class})
 class LoggingCallbackFactoryTest implements MethodSourceHelper {
     static class TestMethodEvent extends AbstractMethodEvent {
+        @Override
+        public boolean isReentrant() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     @InjectMocks
@@ -72,14 +76,13 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         doReturn(callbacks).when(context).callbacks();
         int size = uid();
         doReturn(size).when(callbacks).size();
-        var strategy = mock(JfrLoggingContextStrategy.class);
         var args = List.of(uidS(), uid());
         doReturn(args).when(joinPoint).args();
 
         LoggingCallback actual = subj.create(joinPoint, event, logger, context);
 
         assertThat(actual).is(loggingCallback(joinPoint, event, targetLogger, logErrorEnabled, name, method, size, args));
-        verifyNoMoreInteractions(loggerFactory, ticker, properties, logger, targetLogger, joinPoint, event, context, callbacks, strategy);
+        verifyNoMoreInteractions(loggerFactory, ticker, properties, logger, targetLogger, joinPoint, event, context, callbacks);
 
         actual.stopwatch().start();
         verify(ticker).read();
@@ -105,12 +108,11 @@ class LoggingCallbackFactoryTest implements MethodSourceHelper {
         doReturn(callbacks).when(context).callbacks();
         int size = uid();
         doReturn(size).when(callbacks).size();
-        var strategy = mock(JfrLoggingContextStrategy.class);
 
         LoggingCallback actual = subj.create(joinPoint, event, logger, context);
 
         assertThat(actual).is(loggingCallback(joinPoint, event, null, logErrorEnabled, name, method, size, null));
-        verifyNoMoreInteractions(loggerFactory, ticker, properties, logger, joinPoint, event, context, callbacks, strategy);
+        verifyNoMoreInteractions(loggerFactory, ticker, properties, logger, joinPoint, event, context, callbacks);
 
         actual.stopwatch().start();
         verify(ticker).read();

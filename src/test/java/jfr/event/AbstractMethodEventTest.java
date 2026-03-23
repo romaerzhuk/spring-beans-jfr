@@ -24,6 +24,10 @@ import static org.mockito.Mockito.mock;
 @ExtendWith({MockitoExtension.class, UidExtension.class})
 public class AbstractMethodEventTest implements MethodSourceHelper {
     static class TestMethodEvent extends AbstractMethodEvent {
+        @Override
+        public boolean isReentrant() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     @Spy

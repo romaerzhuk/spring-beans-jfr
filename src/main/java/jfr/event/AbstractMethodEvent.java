@@ -77,4 +77,11 @@ public abstract class AbstractMethodEvent extends Event {
         log.trace("isEnabled {} {} eventEnabled={}, debugEnabled={} => {}", joinPoint, this, eventEnabled, debugEnabled, result);
         return result;
     }
+
+    /**
+     * Признак возможности повторного вхождения в метод.
+     *
+     * @return true, если есть возможность повторного вхождения в метод, иначе false
+     */
+    public abstract boolean isReentrant();
 }

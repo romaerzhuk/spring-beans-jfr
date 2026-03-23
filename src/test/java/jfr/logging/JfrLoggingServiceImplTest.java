@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.stream.Stream;
 
@@ -48,18 +47,10 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
     @Spy
     @InjectMocks
     JfrLoggingServiceImpl<TestEvent> subj;
-    @Autowired
     @Mock
     JfrLoggingHelper helper;
-    @Autowired
     @Mock
     JfrLoggingContextHolder contextHolder;
-    @Autowired
-    @Mock
-    JfrReentrantLoggingContextStrategy reentrantContextStrategy;
-    @Autowired
-    @Mock
-    JfrNonReentrantLoggingContextStrategy nonReentrantContextStrategy;
 
     @Test
     void proceed() throws Throwable {
@@ -84,7 +75,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         verify(subj).proceed(any());
         verify(subj).proceedCallback(any(), any());
         verify(joinPoint).proceed();
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, joinPoint, jfrJoinPoint);
+        verifyNoMoreInteractions(subj, contextHolder, joinPoint, jfrJoinPoint);
     }
 
     @Test
@@ -93,7 +84,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         var callback = mock(JoinPointCallback.class);
         var logger = LoggerFactory.getLogger(JfrLoggingServiceImpl.class);
         var context = mock(LoggingContext.class);
-        doReturn(context).when(helper).before(eq(joinPoint), eq(reentrantContextStrategy), isA(MethodInvocationEvent.class), eq(logger));
+        doReturn(context).when(helper).before(eq(joinPoint), isA(MethodInvocationEvent.class), eq(logger));
         Object expected = uidS();
         doReturn(expected).when(callback).proceed();
 
@@ -102,10 +93,10 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         assertThat(actual).isEqualTo(expected);
         var inOrder = inOrder(subj, helper, callback);
         inOrder.verify(subj).proceedCallback(any(), any());
-        inOrder.verify(helper).before(any(), any(), any(), any());
+        inOrder.verify(helper).before(any(), any(), any());
         inOrder.verify(callback).proceed();
         inOrder.verify(helper).afterReturning(context, joinPoint, expected);
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, joinPoint, callback, context);
+        verifyNoMoreInteractions(subj, contextHolder, joinPoint, callback, context);
     }
 
     @ParameterizedTest
@@ -115,7 +106,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         var callback = mock(JoinPointCallback.class);
         var logger = LoggerFactory.getLogger(JfrLoggingServiceImpl.class);
         var context = mock(LoggingContext.class);
-        doReturn(context).when(helper).before(eq(joinPoint), eq(reentrantContextStrategy), isA(MethodInvocationEvent.class), eq(logger));
+        doReturn(context).when(helper).before(eq(joinPoint), isA(MethodInvocationEvent.class), eq(logger));
         doThrow(thrown).when(callback).proceed();
 
         var t = assertThrows(Throwable.class, () -> subj.proceedCallback(joinPoint, callback));
@@ -123,10 +114,10 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         assertThat(t).isEqualTo(thrown);
         var inOrder = inOrder(subj, helper, callback);
         inOrder.verify(subj).proceedCallback(any(), any());
-        inOrder.verify(helper).before(any(), any(), any(), any());
+        inOrder.verify(helper).before(any(), any(), any());
         inOrder.verify(callback).proceed();
         inOrder.verify(helper).afterThrowing(context, joinPoint, thrown);
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, joinPoint, callback, context);
+        verifyNoMoreInteractions(subj, contextHolder, joinPoint, callback, context);
     }
 
     @ParameterizedTest
@@ -135,7 +126,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         var joinPoint = mock(JfrJoinPoint.class);
         var callback = mock(JoinPointCallback.class);
         var logger = LoggerFactory.getLogger(JfrLoggingServiceImpl.class);
-        doReturn(null).when(helper).before(eq(joinPoint), eq(reentrantContextStrategy), isA(MethodInvocationEvent.class), eq(logger));
+        doReturn(null).when(helper).before(eq(joinPoint), isA(MethodInvocationEvent.class), eq(logger));
         Object expected = uidS();
         doReturn(expected).when(callback).proceed();
 
@@ -144,9 +135,9 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         assertThat(actual).isEqualTo(expected);
         var inOrder = inOrder(subj, helper, callback);
         inOrder.verify(subj).proceedCallback(any(), any());
-        inOrder.verify(helper).before(any(), any(), any(), any());
+        inOrder.verify(helper).before(any(), any(), any());
         inOrder.verify(callback).proceed();
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, joinPoint, callback);
+        verifyNoMoreInteractions(subj, contextHolder, joinPoint, callback);
     }
 
     @ParameterizedTest
@@ -155,7 +146,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         var joinPoint = mock(JfrJoinPoint.class);
         var callback = mock(JoinPointCallback.class);
         var logger = LoggerFactory.getLogger(JfrLoggingServiceImpl.class);
-        doReturn(null).when(helper).before(eq(joinPoint), eq(reentrantContextStrategy), isA(MethodInvocationEvent.class), eq(logger));
+        doReturn(null).when(helper).before(eq(joinPoint), isA(MethodInvocationEvent.class), eq(logger));
         doThrow(thrown).when(callback).proceed();
 
         var t = assertThrows(Throwable.class, () -> subj.proceedCallback(joinPoint, callback));
@@ -163,9 +154,9 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         assertThat(t).isEqualTo(thrown);
         var inOrder = inOrder(subj, helper, callback);
         inOrder.verify(subj).proceedCallback(any(), any());
-        inOrder.verify(helper).before(any(), any(), any(), any());
+        inOrder.verify(helper).before(any(), any(), any());
         inOrder.verify(callback).proceed();
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, joinPoint, callback);
+        verifyNoMoreInteractions(subj, contextHolder, joinPoint, callback);
     }
 
     static Stream<Throwable> exceptions() {
@@ -180,8 +171,8 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         subj.before(joinPoint, event);
 
         verify(subj).before(any(), any());
-        verify(helper).before(joinPoint, nonReentrantContextStrategy, event, LoggerFactory.getLogger(JfrLoggingServiceImpl.class));
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, joinPoint, event);
+        verify(helper).before(joinPoint, event, LoggerFactory.getLogger(JfrLoggingServiceImpl.class));
+        verifyNoMoreInteractions(subj, contextHolder, joinPoint, event);
     }
 
     @Test
@@ -194,7 +185,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
 
         verify(subj).afterReturning(any(), any());
         verify(context).afterReturningNonReentrant(TestEvent.class, retVal);
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, context);
+        verifyNoMoreInteractions(subj, contextHolder, context);
     }
 
     @Test
@@ -205,7 +196,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         subj.afterReturning(TestEvent.class, retVal);
 
         verify(subj).afterReturning(any(), any());
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy);
+        verifyNoMoreInteractions(subj, contextHolder);
     }
 
     @Test
@@ -218,7 +209,7 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
 
         verify(subj).afterThrowing(any(), any());
         verify(context).afterThrowingNonReentrant(TestEvent.class, cause);
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy, context);
+        verifyNoMoreInteractions(subj, contextHolder, context);
     }
 
     @Test
@@ -229,6 +220,6 @@ public class JfrLoggingServiceImplTest implements MethodSourceHelper {
         subj.afterThrowing(TestEvent.class, cause);
 
         verify(subj).afterThrowing(any(), any());
-        verifyNoMoreInteractions(subj, contextHolder, reentrantContextStrategy, nonReentrantContextStrategy);
+        verifyNoMoreInteractions(subj, contextHolder);
     }
 }

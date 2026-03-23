@@ -21,8 +21,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 final class JfrLoggingServiceImpl<E extends NonReentrantMethodEvent> implements JfrLoggingService, NonReentrantLoggingService<E> {
     private final JfrLoggingHelper helper;
     private final JfrLoggingContextHolder contextHolder;
-    private final JfrReentrantLoggingContextStrategy reentrantContextStrategy;
-    private final JfrNonReentrantLoggingContextStrategy nonReentrantContextStrategy;
 
     @Override
     public Object proceed(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -32,7 +30,7 @@ final class JfrLoggingServiceImpl<E extends NonReentrantMethodEvent> implements 
     @Override
     public Object proceedCallback(JfrJoinPoint joinPoint, JoinPointCallback callback) throws Throwable {
         log.trace("proceedCallback - start {}", joinPoint);
-        LoggingContext context = helper.before(joinPoint, reentrantContextStrategy, new MethodInvocationEvent(), log);
+        LoggingContext context = helper.before(joinPoint, new MethodInvocationEvent(), log);
         if (context == null) {
             return callback.proceed();
         }
@@ -51,7 +49,7 @@ final class JfrLoggingServiceImpl<E extends NonReentrantMethodEvent> implements 
     @Override
     public void before(JfrJoinPoint joinPoint, E event) {
         log.trace("before {} {}", joinPoint, event);
-        helper.before(joinPoint, nonReentrantContextStrategy, event, log);
+        helper.before(joinPoint, event, log);
     }
 
     @Override

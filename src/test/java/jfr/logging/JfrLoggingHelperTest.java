@@ -35,14 +35,13 @@ class JfrLoggingHelperTest {
         var joinPoint = mock(JfrJoinPoint.class);
         var logger = mock(Logger.class);
         doReturn(true).when(event).isEnabled(joinPoint, logger);
-        var strategy = mock(JfrLoggingContextStrategy.class);
         var expected = mock(LoggingContext.class);
-        doReturn(expected).when(contextHolder).getOrCreateIfReentrant(joinPoint, event, logger, strategy);
+        doReturn(expected).when(contextHolder).getOrCreateIfReentrant(joinPoint, event, logger);
 
-        LoggingContext actual = subj.before(joinPoint, strategy, event, logger);
+        LoggingContext actual = subj.before(joinPoint, event, logger);
 
         assertThat(actual).isEqualTo(expected);
-        verifyNoMoreInteractions(contextHolder, event, joinPoint, logger, strategy, expected);
+        verifyNoMoreInteractions(contextHolder, event, joinPoint, logger, expected);
     }
 
     @Test
@@ -51,12 +50,11 @@ class JfrLoggingHelperTest {
         var joinPoint = mock(JfrJoinPoint.class);
         var logger = mock(Logger.class);
         doReturn(false).when(event).isEnabled(joinPoint, logger);
-        var strategy = mock(JfrLoggingContextStrategy.class);
 
-        LoggingContext actual = subj.before(joinPoint, strategy, event, logger);
+        LoggingContext actual = subj.before(joinPoint, event, logger);
 
         assertThat(actual).isNull();
-        verifyNoMoreInteractions(contextHolder, event, joinPoint, logger, strategy);
+        verifyNoMoreInteractions(contextHolder, event, joinPoint, logger);
     }
 
     @Test

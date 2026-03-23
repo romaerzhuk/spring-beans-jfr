@@ -16,4 +16,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
  * @author Roman_Erzhukov
  */
 public abstract class NonReentrantMethodEvent extends AbstractMethodEvent {
+    @Override
+    public final boolean isReentrant() {
+        return false;
+    }
 }

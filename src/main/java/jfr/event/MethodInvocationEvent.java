@@ -19,4 +19,8 @@ import jdk.jfr.StackTrace;
 @Label("Method Invocation")
 @StackTrace(false)
 public final class MethodInvocationEvent extends AbstractMethodEvent {
+    @Override
+    public boolean isReentrant() {
+        return true;
+    }
 }

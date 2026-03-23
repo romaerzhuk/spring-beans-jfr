@@ -50,17 +50,13 @@ final class JfrLoggingContextHolder implements JfrJoinPointFactory, DisposableBe
      * @param joinPoint точка вызова
      * @param event     событие JFR
      * @param logger    логгер
-     * @param strategy  стратегия создания контекста
      * @return {@link LoggingContext} или null
      */
     @Nullable
-    public LoggingContext getOrCreateIfReentrant(JfrJoinPoint joinPoint,
-                                                 AbstractMethodEvent event,
-                                                 Logger logger,
-                                                 JfrLoggingContextStrategy strategy) {
+    public LoggingContext getOrCreateIfReentrant(JfrJoinPoint joinPoint, AbstractMethodEvent event, Logger logger) {
         LoggingContext context = getContext();
         if (context == null) {
-            context = strategy.createContextIfReentrant(joinPoint, contextFactory);
+            context = event.isReentrant() ? contextFactory.apply(joinPoint) : null;
             if (context == null) {
                 // NonReentrantMethodEvent предназначен для случаев, когда невозможно обеспечить гарантию вызова afterReturning/afterThrowable.
                 // Если вызова afterReturning/afterThrowable нет, то очистка контекста может

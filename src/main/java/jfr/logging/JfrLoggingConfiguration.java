@@ -32,8 +32,7 @@ public class JfrLoggingConfiguration {
 
     @Bean
     <E extends NonReentrantMethodEvent> JfrLoggingServiceImpl<E> jfrLoggingService() {
-        return new JfrLoggingServiceImpl<>(jfrLoggingHelper(), jfrLoggingContextHoler(),
-                jfrReentrantLoggingContextStrategy(), jfrNonReentrantLoggingContextStrategy());
+        return new JfrLoggingServiceImpl<>(jfrLoggingHelper(), jfrLoggingContextHoler());
     }
 
     @Bean
@@ -54,16 +53,6 @@ public class JfrLoggingConfiguration {
     @Bean
     LoggingCallbackFactory jfrLoggingCallbackFactory() {
         return new LoggingCallbackFactory(LoggerFactory::getLogger, Ticker.systemTicker(), jfrLoggingProperties);
-    }
-
-    @Bean
-    JfrReentrantLoggingContextStrategy jfrReentrantLoggingContextStrategy() {
-        return new JfrReentrantLoggingContextStrategy();
-    }
-
-    @Bean
-    JfrNonReentrantLoggingContextStrategy jfrNonReentrantLoggingContextStrategy() {
-        return new JfrNonReentrantLoggingContextStrategy();
     }
 
     @Bean
