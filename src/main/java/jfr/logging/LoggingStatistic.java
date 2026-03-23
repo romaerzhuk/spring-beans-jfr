@@ -7,7 +7,6 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +43,6 @@ class LoggingStatistic {
     /**
      * Событие с максимальным временем выполнения.
      */
-    @Nullable
     private AbstractMethodEvent event;
 
     /**
